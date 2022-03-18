@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stocker/dev_credentials.dart';
-import 'package:stocker/symbol_page.dart';
+import 'package:stocker/symbol/symbol_page.dart';
 import 'package:stocker/xtb/model/symbol_data.dart';
 
 import 'xtb/connector.dart';
