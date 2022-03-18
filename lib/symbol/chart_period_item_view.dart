@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../ui_style.dart';
@@ -31,9 +30,10 @@ class ChartPeriodItemView extends StatelessWidget {
             padding: EdgeInsets.all(UIStyle.contentMarginMedium),
             child: Text(period.tag,
                 style: TextStyle(
-                    color: selected
-                        ? colorScheme.onPrimary
-                        : colorScheme.onBackground)),
+                  color: selected
+                      ? colorScheme.onPrimary
+                      : colorScheme.onBackground,
+                )),
           ),
           onTap: () => onClick(),
         ),
