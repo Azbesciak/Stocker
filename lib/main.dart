@@ -8,7 +8,7 @@ import 'package:stocker/xtb/landing_page.dart';
 import 'package:stocker/xtb/model/symbol_data.dart';
 import 'package:stocker/symbol/symbol_page.dart';
 
-import '../favourites_page.dart';
+import 'favourites_page.dart';
 
 void main() {
   runApp(const StockerApp());
