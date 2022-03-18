@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:stocker/symbol/chart_period_selector.dart';
 import 'package:stocker/xtb/model/chart_period.dart';
@@ -33,7 +31,6 @@ class _SymbolPageState extends State<SymbolPage> {
 
   @override
   Widget build(BuildContext context) {
-    log("BUILD ${_period.tag}");
     return SafeArea(
       child: Scaffold(
         body: Stack(
