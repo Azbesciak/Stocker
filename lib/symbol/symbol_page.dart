@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stocker/symbol/chart_period_selector.dart';
 import 'package:stocker/xtb/model/chart_period.dart';
 import 'package:stocker/xtb/model/symbol_data.dart';
-import 'package:stocker/xtb/symbol_chart.dart';
+import 'package:stocker/symbol/symbol_chart.dart';
 
 class SymbolPage extends StatefulWidget {
   static const navRoute = "/symbol";

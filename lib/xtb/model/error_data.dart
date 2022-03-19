@@ -1,4 +1,5 @@
 class ErrorData {
+  static const NO_MORE_DATA_ERR = 'EX009';
   final String errorCode;
   final String errorDescr;
 
