@@ -29,15 +29,16 @@ class SymbolChartWidget extends StatefulWidget {
 
 // https://www.syncfusion.com/kb/12535/how-to-lazily-load-more-data-to-the-chart-sfcartesianchart
 class _SymbolChartWidgetState extends State<SymbolChartWidget> {
-  static const FETCH_PERIODS = 50;
+  static const FETCH_PERIODS = 300;
+  ChartSeriesController? _seriesController;
   late Future<ChartData> _chartData;
   late TrackballBehavior _trackballBehavior;
   late CrosshairBehavior _crosshairBehavior;
   late ZoomPanBehavior _zoomPanBehavior;
-  double? _oldAxisVisibleMin, _oldAxisVisibleMax;
-  late bool _isLoadMoreView;
+  num? _oldAxisVisibleMin, _oldAxisVisibleMax;
+  late bool _isLoadMoreView, _isNeedToUpdateView;
   int _currentPeriodOffset = 0;
-  int _newDataSize = 0;
+  late GlobalKey<State> _globalKey;
 
   @override
   void didUpdateWidget(covariant SymbolChartWidget oldWidget) {
@@ -46,7 +47,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
         oldWidget.symbol != widget.symbol) {
       setState(() {
         _currentPeriodOffset = 0;
-        _updateChartData(false);
+        _chartData = _fetchData();
       });
     }
   }
@@ -59,7 +60,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       activationMode: ActivationMode.singleTap,
     );
     _crosshairBehavior = CrosshairBehavior(
-      enable: true,
+      enable: false,
       activationMode: ActivationMode.singleTap,
     );
     _zoomPanBehavior = ZoomPanBehavior(
@@ -69,35 +70,13 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       enablePanning: true,
       zoomMode: ZoomMode.x,
     );
+    _globalKey = GlobalKey();
     _isLoadMoreView = false;
-    _updateChartData(false);
-  }
-
-  void _updateChartData(bool append) {
-    if (append) {
-      _chartData = _chartData.then((oldData) => _fetchData().catchError((err) {
-            if (err is ErrorData &&
-                err.errorCode == ErrorData.NO_MORE_DATA_ERR) {
-              log("NO MORE CHART DATA");
-              return oldData;
-            }
-            throw err;
-          }).then(
-            (newData) {
-              _newDataSize = newData.rateInfos.length;
-              return ChartData(
-                digits: newData.digits,
-                rateInfos: [...newData.rateInfos, ...oldData.rateInfos],
-              );
-            },
-          ));
-    } else {
-      _chartData = _fetchData();
-    }
+    _isNeedToUpdateView = false;
+    _chartData = _fetchData();
   }
 
   Future<ChartData> _fetchData() {
-    _newDataSize = 0;
     final connector = Provider.of<XTBApiConnector>(context, listen: false);
     var currentPeriod = widget.period;
     var currentSymbol = widget.symbol.symbol;
@@ -106,7 +85,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     final start =
         end.subtract(Duration(minutes: currentPeriod.value * FETCH_PERIODS));
     _currentPeriodOffset += FETCH_PERIODS;
-    var fetchedData = connector.getChartRangeRequest(
+    return connector.getChartRangeRequest(
       params: ChartRequest(
         end: end.millisecondsSinceEpoch,
         start: start.millisecondsSinceEpoch,
@@ -115,7 +94,6 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
         ticks: 0,
       ),
     );
-    return fetchedData;
   }
 
   @override
@@ -142,7 +120,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
 
   SfCartesianChart _defineCHart(List<CandleData> data) {
     return SfCartesianChart(
-      loadMoreIndicatorBuilder: _buildLoadMoreIndicatorView,
+      // loadMoreIndicatorBuilder: _buildLoadMoreIndicatorView,
       onActualRangeChanged: _onActualRangeChanged,
       zoomPanBehavior: _zoomPanBehavior,
       trackballBehavior: _trackballBehavior,
@@ -157,9 +135,8 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     if (args.orientation == AxisOrientation.horizontal) {
       // // Assigning the old visible min and max after loads the data.
       if (_isLoadMoreView && _oldAxisVisibleMin != null) {
-        args.visibleMin = _oldAxisVisibleMin! + _newDataSize;
-        args.visibleMax = _oldAxisVisibleMax! + _newDataSize;
-        _newDataSize = 0;
+        args.visibleMin = _oldAxisVisibleMin!;
+        args.visibleMax = _oldAxisVisibleMax!;
       }
       _oldAxisVisibleMin = args.visibleMin;
       _oldAxisVisibleMax = args.visibleMax;
@@ -177,12 +154,8 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     );
   }
 
-  DateTimeCategoryAxis _defineXAxis(List<CandleData> data) {
+  ChartAxis _defineXAxis(List<CandleData> data) {
     return DateTimeCategoryAxis(
-      // visibleMinimum: data.isNotEmpty
-      //     ? DateTime.fromMillisecondsSinceEpoch(
-      //         data[max(data.length - 30, 0)].ctm)
-      //     : null,
       dateFormat: _getDateFormat(),
       majorGridLines: MajorGridLines(width: 0),
       intervalType: DateTimeIntervalType.auto,
@@ -190,10 +163,14 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   }
 
   CandleSeries<CandleData, DateTime> _initializeCandleSerie(
-      List<CandleData> data) {
+    List<CandleData> data,
+  ) {
     return CandleSeries<CandleData, DateTime>(
       enableSolidCandles: true,
       dataSource: data,
+      onRendererCreated: (ChartSeriesController controller) {
+        _seriesController = controller;
+      },
       xValueMapper: (CandleData data, _) =>
           DateTime.fromMillisecondsSinceEpoch(data.ctm),
       lowValueMapper: (CandleData data, _) => data.open + data.low,
@@ -218,15 +195,54 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     // To know whether reaches the end of the chart
     log("CHART BUILD MORE ${direction}");
     if (direction == ChartSwipeDirection.start) {
-      // setState(() {
-      _updateChartData(true);
-      // });
-      _chartData.then((value) {
-        setState(() {});
-      });
-      return CircularProgressIndicator();
+      _isNeedToUpdateView = true;
+      _globalKey = GlobalKey<State>();
+      return StatefulBuilder(
+          key: _globalKey,
+          builder: (BuildContext context, StateSetter stateSetter) {
+            Widget widget;
+            if (_isNeedToUpdateView) {
+              widget = CircularProgressIndicator();
+              _fetchMoreData();
+            } else {
+              widget = Container();
+            }
+            return widget;
+          });
     } else {
       return SizedBox.fromSize(size: Size.zero);
     }
+  }
+
+  void _fetchMoreData() {
+    _chartData.then((oldData) => _fetchData().catchError((err) {
+          if (err is ErrorData && err.errorCode == ErrorData.NO_MORE_DATA_ERR) {
+            log("NO MORE CHART DATA");
+            return oldData;
+          }
+          throw err;
+        }).then(
+          (newData) {
+            oldData.rateInfos.insertAll(0, newData.rateInfos);
+            _seriesController?.updateDataSource(
+              addedDataIndexes: List<int>.generate(
+                newData.rateInfos.length,
+                (index) => index,
+              ),
+            );
+            log("new data arrived: ${oldData.rateInfos.length}");
+            _isLoadMoreView = true;
+            _isNeedToUpdateView = false;
+            if (_globalKey.currentState != null) {
+              (_globalKey.currentState as dynamic).setState(() {});
+            }
+          },
+        ));
+  }
+
+  @override
+  void dispose() {
+    _seriesController = null;
+    super.dispose();
   }
 }
