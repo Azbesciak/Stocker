@@ -1,8 +1,8 @@
 class TicksData {
   final double ask;
-  final int askVolume;
+  final int? askVolume;
   final double bid;
-  final int bidVolume;
+  final int? bidVolume;
   final double high;
   final int level;
   final double low;
@@ -27,12 +27,29 @@ class TicksData {
     required this.timestamp,
   });
 
+  Map<String, dynamic> toMap() {
+    return {
+      'ask': ask,
+      'askVolume': askVolume,
+      'bid': bid,
+      'bidVolume': bidVolume,
+      'high': high,
+      'level': level,
+      'low': low,
+      'quoteId': quoteId,
+      'spreadRaw': spreadRaw,
+      'spreadTable': spreadTable,
+      'symbol': symbol,
+      'timestamp': timestamp,
+    };
+  }
+
   factory TicksData.fromMap(Map<String, dynamic> map) {
     return TicksData(
       ask: map['ask'] as double,
-      askVolume: map['askVolume'] as int,
+      askVolume: map['askVolume'] as int?,
       bid: map['bid'] as double,
-      bidVolume: map['bidVolume'] as int,
+      bidVolume: map['bidVolume'] as int?,
       high: map['high'] as double,
       level: map['level'] as int,
       low: map['low'] as double,
@@ -43,4 +60,7 @@ class TicksData {
       timestamp: map['timestamp'] as int,
     );
   }
+
+  @override
+  String toString() => toMap().toString();
 }
