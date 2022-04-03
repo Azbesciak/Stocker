@@ -13,6 +13,7 @@ import 'json_helper.dart';
 import 'model/candle_data.dart';
 import 'model/error_data.dart';
 import 'model/news_data.dart';
+import 'model/result.dart';
 import 'model/symbol_data.dart';
 import 'model/ticks.dart';
 // http://developers.xstore.pro/documentation/
@@ -105,34 +106,44 @@ class XTBApiConnector {
     _executeCommand(
       command: command,
       arguments: arguments,
-      onResult: (res) => {
-        if (res.status)
-          {completer.complete(mapper(res))}
-        else
-          {completer.completeError(ErrorData.fromMap(res))}
+      onResult: (res) {
+        if (res.status) {
+          completer.complete(mapper(res));
+        } else {
+          completer.completeError(ErrorData.fromMap(res));
+        }
       },
     );
     return completer.future;
   }
 
-  Cancellation _executeStreamCommand({
+  Cancellation _executeStreamCommand<T>({
     required String subscribeCommand,
     required String unsubscribeCommand,
-    required Callback<JsonObj> callback,
+    required Mapper<JsonObj, T> mapper,
+    required Callback<Result<T>> onResult,
     JsonObj? inlineArgs,
   }) {
     String id = "";
     void cancellation() {
       if (_streamSubs.remove(id) != null) {
         _executeCommandNoResponse(
-            command: unsubscribeCommand, inlineArgs: inlineArgs);
+          command: unsubscribeCommand,
+          inlineArgs: inlineArgs,
+        );
       }
     }
 
     id = _executeCommand(
       command: subscribeCommand,
       inlineArgs: inlineArgs,
-      onResult: callback,
+      onResult: (res) {
+        if (res.status) {
+          onResult(Result.success(value: mapper(res)));
+        } else {
+          onResult(Result.failure(error: ErrorData.fromMap(res)));
+        }
+      },
       cancellation: cancellation,
     );
     return cancellation;
@@ -186,8 +197,9 @@ class XTBApiConnector {
     );
   }
 
-  Future<List<TradingHoursData>> getTradingHours(
-      {required List<String> symbols}) {
+  Future<List<TradingHoursData>> getTradingHours({
+    required List<String> symbols,
+  }) {
     return _executeFutureCommand(
       command: "getTradingHours",
       mapper: returnDataMapper(arrayDataMapper(TradingHoursData.fromMap)),
@@ -197,34 +209,37 @@ class XTBApiConnector {
 
   Cancellation getCandles({
     required String symbol,
-    required Callback<CandleData> callback,
+    required Callback<Result<CandleData>> onResult,
   }) {
     return _executeStreamCommand(
       subscribeCommand: "getCandles",
       unsubscribeCommand: "stopCandles",
-      callback: (res) => callback(CandleData.fromMap(res)),
+      onResult: onResult,
+      mapper: CandleData.fromMap,
     );
   }
 
   Cancellation getNews({
-    required Callback<NewsData> callback,
+    required Callback<Result<NewsData>> onResult,
   }) {
     return _executeStreamCommand(
       subscribeCommand: "getNews",
       unsubscribeCommand: "stopNews",
-      callback: (res) => callback(NewsData.fromMap(res)),
+      onResult: onResult,
+      mapper: NewsData.fromMap,
     );
   }
 
   Cancellation getTickPrices({
     required String symbol,
-    required Callback<TicksData> callback,
+    required Callback<Result<TicksData>> onResult,
   }) {
     return _executeStreamCommand(
       subscribeCommand: "getTickPrices",
       unsubscribeCommand: "stopTickPrices",
       inlineArgs: {"symbol": symbol},
-      callback: (res) => callback(TicksData.fromMap(res)),
+      onResult: onResult,
+      mapper: TicksData.fromMap,
     );
   }
 }
