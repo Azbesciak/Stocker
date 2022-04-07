@@ -20,8 +20,19 @@ import 'model/ticks.dart';
 
 typedef Cancellation = void Function();
 
+Cancellation invokeOnce(Cancellation cancellation) {
+  var invoked = false;
+  return () {
+    if (invoked) {
+      return;
+    }
+    invoked = true;
+    cancellation();
+  };
+}
+
 extension XTBResponseExtension on JsonObj {
-  bool get status => this["status"] == true;
+  bool get status => this["status"] != false;
 }
 
 typedef Callback<T> = void Function(T result);
@@ -36,22 +47,24 @@ class XTBApiSub {
 
 class XTBApiConnector {
   final String url;
+  final String streamUrl;
   final String appName;
   late WebSocketChannel _channel;
   final Map<String, XTBApiSub> _streamSubs = {};
   int _outgoingRequestId = 0;
+  String? _currentSessionId;
+  final Map<int, Cancellation> _streamCancellations = {};
 
-  XTBApiConnector({required this.url, required this.appName});
+
+  XTBApiConnector({required this.url, required this.streamUrl, required this.appName});
 
   void init() {
-    _channel = WebSocketChannel.connect(
-      Uri.parse(url),
-    );
+    _channel = _spawnNewChannel(url);
     _channel.stream.listen((event) {
       var parsedResponse = jsonDecode(event);
       final String responseId = parsedResponse["customTag"];
       final sub = _streamSubs[responseId];
-      log("RESPONSE [$responseId]: $event");
+      log("RES [$responseId]: $event");
       if (sub != null) {
         sub.callback(parsedResponse);
         if (sub.cancellation == null) {
@@ -61,18 +74,31 @@ class XTBApiConnector {
     });
   }
 
-  void _executeCommandNoResponse(
-      {required String command, JsonObj? inlineArgs}) {
+  WebSocketChannel _spawnNewChannel(String url) {
+    return WebSocketChannel.connect(
+      Uri.parse(url),
+    );
+  }
+
+  void _executeCommandNoResponse({
+    required String command,
+    required WebSocketChannel channel,
+    JsonObj? inlineArgs,
+  }) {
     JsonObj request = {"command": String};
     if (inlineArgs != null) {
       request.addAll(inlineArgs);
     }
-    _channel.sink.add(jsonEncode(request));
+    channel.sink.add(jsonEncode(request));
   }
 
   void dispose() {
     _streamSubs.clear();
-    _executeCommandNoResponse(command: "logout");
+    _currentSessionId = null;
+    for (final element in _streamCancellations.entries.toList()) {
+      element.value();
+    }
+    _executeCommandNoResponse(command: "logout", channel: _channel);
     _channel.sink.close();
   }
 
@@ -91,7 +117,7 @@ class XTBApiConnector {
     if (inlineArgs != null) {
       request.addAll(inlineArgs);
     }
-    log("REQUEST [$id]: $command arguments: $arguments, inline: $inlineArgs");
+    log("REQ [$id]: $command arguments: $arguments, inline: $inlineArgs");
     _streamSubs[id] = XTBApiSub(callback: onResult, cancellation: cancellation);
     _channel.sink.add(jsonEncode(request));
     return id;
@@ -124,28 +150,38 @@ class XTBApiConnector {
     required Callback<Result<T>> onResult,
     JsonObj? inlineArgs,
   }) {
-    String id = "";
-    void cancellation() {
-      if (_streamSubs.remove(id) != null) {
-        _executeCommandNoResponse(
-          command: unsubscribeCommand,
-          inlineArgs: inlineArgs,
-        );
+    final channel = _spawnNewChannel(streamUrl);
+    channel.stream.listen((res) {
+      log("RES [$subscribeCommand]: $res");
+      final result = jsonDecode(res) as JsonObj;
+      if (result.status) {
+        onResult(Result.success(value: mapper(result)));
+      } else {
+        onResult(Result.failure(error: ErrorData.fromMap(result)));
       }
-    }
+    });
+    final id = ++_outgoingRequestId;
+    final cancellation = invokeOnce(() {
+      _streamCancellations.remove(id);
+      _executeCommandNoResponse(
+        command: unsubscribeCommand,
+        channel: channel,
+        inlineArgs: inlineArgs,
+      );
+      channel.sink.close();
+    });
+    _streamCancellations[id] = cancellation;
 
-    id = _executeCommand(
-      command: subscribeCommand,
-      inlineArgs: inlineArgs,
-      onResult: (res) {
-        if (res.status) {
-          onResult(Result.success(value: mapper(res)));
-        } else {
-          onResult(Result.failure(error: ErrorData.fromMap(res)));
-        }
-      },
-      cancellation: cancellation,
-    );
+    JsonObj request = {
+      "streamSessionId": _currentSessionId,
+      "command": subscribeCommand,
+    };
+    if (inlineArgs != null) {
+      request.addAll(inlineArgs);
+    }
+    var encoded = jsonEncode(request);
+    log("REQ [$subscribeCommand]: $encoded");
+    channel.sink.add(encoded);
     return cancellation;
   }
 
@@ -158,7 +194,10 @@ class XTBApiConnector {
         "password": credentials.password,
         "appName": appName,
       },
-    );
+    ).then((value) {
+      _currentSessionId = value["streamSessionId"];
+      return value;
+    });
   }
 
   Future<List<SymbolData>> getAllSymbols() {

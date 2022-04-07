@@ -23,6 +23,7 @@ class StockerApp extends StatelessWidget {
         Provider<XTBApiConnector>(
           create: (context) => XTBApiConnector(
             url: 'wss://ws.xtb.com/demo',
+            streamUrl: 'wss://ws.xtb.com/demoStream',
             appName: 'test',
           )..init(),
           dispose: (ctx, value) => value.dispose(),
