@@ -155,7 +155,7 @@ class XTBApiConnector {
       logInfo("RES [$subscribeCommand]: $res");
       final result = jsonDecode(res) as JsonObj;
       if (result.status) {
-        onResult(Result.success(value: mapper(result)));
+        onResult(Result.success(value: mapper(result["data"])));
       } else {
         onResult(Result.failure(error: ErrorData.fromMap(result)));
       }
