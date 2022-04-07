@@ -1,6 +1,5 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
+import 'package:loggy/loggy.dart';
 import 'package:provider/provider.dart';
 import 'package:stocker/xtb/connector.dart';
 import 'package:stocker/xtb/json_helper.dart';
@@ -9,6 +8,7 @@ import 'package:stocker/symbol/symbol_page.dart';
 import 'favourites_page.dart';
 
 void main() {
+  Loggy.initLoggy(logPrinter: PrettyPrinter(showColors: true));
   runApp(const StockerApp());
 }
 
@@ -58,7 +58,7 @@ class StockerApp extends StatelessWidget {
                 );
               },
             };
-            log('NAVIGATION: ${settings.name}, PARAMS: ${settings.arguments}');
+            logInfo('NAV: ${settings.name}, PARAMS: ${settings.arguments}');
             WidgetBuilder builder = routes[settings.name]!;
             return MaterialPageRoute(
               builder: (ctx) => builder(ctx),

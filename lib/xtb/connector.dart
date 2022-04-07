@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 
+import 'package:loggy/loggy.dart';
 import 'package:stocker/xtb/model/calendar_data.dart';
 import 'package:stocker/xtb/model/chart_data.dart';
 import 'package:stocker/xtb/model/chart_request.dart';
@@ -64,7 +64,7 @@ class XTBApiConnector {
       var parsedResponse = jsonDecode(event);
       final String responseId = parsedResponse["customTag"];
       final sub = _streamSubs[responseId];
-      log("RES [$responseId]: $event");
+      logInfo("RES [$responseId]: ${trimIfTooLong(event)}");
       if (sub != null) {
         sub.callback(parsedResponse);
         if (sub.cancellation == null) {
@@ -117,7 +117,7 @@ class XTBApiConnector {
     if (inlineArgs != null) {
       request.addAll(inlineArgs);
     }
-    log("REQ [$id]: $command arguments: $arguments, inline: $inlineArgs");
+    logInfo("REQ [$id]: $command arguments: $arguments, inline: $inlineArgs");
     _streamSubs[id] = XTBApiSub(callback: onResult, cancellation: cancellation);
     _channel.sink.add(jsonEncode(request));
     return id;
@@ -152,7 +152,7 @@ class XTBApiConnector {
   }) {
     final channel = _spawnNewChannel(streamUrl);
     channel.stream.listen((res) {
-      log("RES [$subscribeCommand]: $res");
+      logInfo("RES [$subscribeCommand]: $res");
       final result = jsonDecode(res) as JsonObj;
       if (result.status) {
         onResult(Result.success(value: mapper(result)));
@@ -180,7 +180,7 @@ class XTBApiConnector {
       request.addAll(inlineArgs);
     }
     var encoded = jsonEncode(request);
-    log("REQ [$subscribeCommand]: $encoded");
+    logInfo("REQ [$subscribeCommand]: $encoded");
     channel.sink.add(encoded);
     return cancellation;
   }
