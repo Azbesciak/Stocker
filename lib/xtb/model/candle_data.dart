@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 class CandleData {
   final double close;
   final int ctm;
