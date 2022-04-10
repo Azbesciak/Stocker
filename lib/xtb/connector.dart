@@ -163,11 +163,6 @@ class XTBApiConnector {
     final id = ++_outgoingRequestId;
     final cancellation = invokeOnce(() {
       _streamCancellations.remove(id);
-      _executeCommandNoResponse(
-        command: unsubscribeCommand,
-        channel: channel,
-        inlineArgs: inlineArgs,
-      );
       channel.sink.close();
     });
     _streamCancellations[id] = cancellation;
