@@ -15,6 +15,18 @@ class CandleData {
     required this.vol,
   });
 
+  factory CandleData.fromRelativeMap(Map<String, dynamic> map) {
+    var openPrice = map['open'] as double;
+    return CandleData(
+      open: openPrice,
+      close: openPrice + map['close'],
+      high: openPrice + map['high'],
+      low: openPrice + map['low'],
+      ctm: map['ctm'] as int,
+      vol: map['vol'] as double,
+    );
+  }
+
   factory CandleData.fromMap(Map<String, dynamic> map) {
     return CandleData(
       close: map['close'] as double,

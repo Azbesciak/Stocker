@@ -13,7 +13,7 @@ class ChartData {
   factory ChartData.fromMap(Map<String, dynamic> map) {
     return ChartData(
       digits: map['digits'] as int,
-      rateInfos: extractJsonList(map['rateInfos'], CandleData.fromMap),
+      rateInfos: extractJsonList(map['rateInfos'], CandleData.fromRelativeMap),
     );
   }
 }

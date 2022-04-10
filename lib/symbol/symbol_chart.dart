@@ -173,10 +173,10 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       },
       xValueMapper: (CandleData data, _) =>
           DateTime.fromMillisecondsSinceEpoch(data.ctm),
-      lowValueMapper: (CandleData data, _) => data.open + data.low,
-      highValueMapper: (CandleData data, _) => data.open + data.high,
+      lowValueMapper: (CandleData data, _) => data.low,
+      highValueMapper: (CandleData data, _) => data.high,
       openValueMapper: (CandleData data, _) => data.open,
-      closeValueMapper: (CandleData data, _) => data.open + data.close,
+      closeValueMapper: (CandleData data, _) => data.close,
     );
   }
 
