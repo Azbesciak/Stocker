@@ -40,9 +40,10 @@ typedef XTBResponseCallback = Callback<JsonObj>;
 
 class XTBApiSub {
   final XTBResponseCallback callback;
+  final String command;
   final Cancellation? cancellation;
 
-  XTBApiSub({required this.callback, this.cancellation});
+  XTBApiSub({required this.callback, this.cancellation, required this.command});
 }
 
 class XTBApiConnector {
@@ -55,8 +56,11 @@ class XTBApiConnector {
   String? _currentSessionId;
   final Map<int, Cancellation> _streamCancellations = {};
 
-
-  XTBApiConnector({required this.url, required this.streamUrl, required this.appName});
+  XTBApiConnector({
+    required this.url,
+    required this.streamUrl,
+    required this.appName,
+  });
 
   void init() {
     _channel = _spawnNewChannel(url);
@@ -64,7 +68,7 @@ class XTBApiConnector {
       var parsedResponse = jsonDecode(event);
       final String responseId = parsedResponse["customTag"];
       final sub = _streamSubs[responseId];
-      logInfo("RES [$responseId]: ${trimIfTooLong(event)}");
+      logInfo("RES [$responseId]: ${sub?.command} ${trimIfTooLong(event)}");
       if (sub != null) {
         sub.callback(parsedResponse);
         if (sub.cancellation == null) {
@@ -118,7 +122,11 @@ class XTBApiConnector {
       request.addAll(inlineArgs);
     }
     logInfo("REQ [$id]: $command arguments: $arguments, inline: $inlineArgs");
-    _streamSubs[id] = XTBApiSub(callback: onResult, cancellation: cancellation);
+    _streamSubs[id] = XTBApiSub(
+      callback: onResult,
+      cancellation: cancellation,
+      command: command,
+    );
     _channel.sink.add(jsonEncode(request));
     return id;
   }
