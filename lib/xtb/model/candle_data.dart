@@ -37,4 +37,19 @@ class CandleData {
       vol: map['vol'] as double,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'close': close,
+      'ctm': ctm,
+      'high': high,
+      'low': low,
+      'open': open,
+      'vol': vol,
+    };
+  }
+
+  @override
+  String toString() => toMap().toString();
+
 }

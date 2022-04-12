@@ -11,6 +11,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'json_helper.dart';
 import 'model/candle_data.dart';
+import 'model/chart_range_request.dart';
 import 'model/error_data.dart';
 import 'model/news_data.dart';
 import 'model/result.dart';
@@ -231,9 +232,17 @@ class XTBApiConnector {
     );
   }
 
-  Future<ChartData> getChartRangeRequest({required ChartRequest params}) {
+  Future<ChartData> getChartRangeRequest({required ChartRangeRequest params}) {
     return _executeFutureCommand(
       command: "getChartRangeRequest",
+      arguments: {'info': params.toMap()},
+      mapper: returnDataMapper(ChartData.fromMap),
+    );
+  }
+
+  Future<ChartData> getChartLastRequest({required ChartRequest params}) {
+    return _executeFutureCommand(
+      command: "getChartLastRequest",
       arguments: {'info': params.toMap()},
       mapper: returnDataMapper(ChartData.fromMap),
     );
