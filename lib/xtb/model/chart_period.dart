@@ -1,11 +1,12 @@
 class ChartPeriod {
   final int value;
+  final int valueInMs;
   final String tag;
 
   const ChartPeriod._({
     required this.value,
     required this.tag,
-  });
+  }): valueInMs = value * 1000 * 60;
 
   static const ChartPeriod M1 = ChartPeriod._(value: 1, tag: "M1");
   static const ChartPeriod M5 = ChartPeriod._(value: 5, tag: "M5");

@@ -133,8 +133,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     )
         .listen((chartData) {
       final myId = ++requestId;
-      final periodInMillis = period.value * 1000 * 60;
-      var start = (DateTime.now().millisecondsSinceEpoch / periodInMillis).ceil() * periodInMillis;
+      var start = (DateTime.now().millisecondsSinceEpoch / period.valueInMs).ceil() * period.valueInMs;
       connector
           .getChartLastRequest(
         params: ChartRequest(
