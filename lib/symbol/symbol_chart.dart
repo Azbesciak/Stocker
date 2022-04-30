@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:stocker/xtb/model/chart_period.dart';
 import 'package:stocker/xtb/model/error_data.dart';
-import 'package:stocker/xtb/model/ticks.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../xtb/connector.dart';
@@ -34,6 +33,7 @@ class SymbolChartWidget extends StatefulWidget {
 // https://www.syncfusion.com/kb/12535/how-to-lazily-load-more-data-to-the-chart-sfcartesianchart
 class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   static const FETCH_PERIODS = 300;
+  static const PADDING_CANDLES = 10;
   ChartSeriesController? _seriesController;
   late Future<ChartData> _chartData;
   late TrackballBehavior _trackballBehavior;
@@ -48,8 +48,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   @override
   void didUpdateWidget(covariant SymbolChartWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.period != widget.period ||
-        oldWidget.symbol != widget.symbol) {
+    if (oldWidget.period != widget.period || oldWidget.symbol != widget.symbol) {
       setState(() {
         _currentPeriodOffset = 0;
         _chartData.ignore();
@@ -92,8 +91,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
 
     var period = widget.period;
     var symbol = widget.symbol.symbol;
-    final streamListen =
-        _requestLastCandle(source, connector, period, symbol, canceled);
+    final streamListen = _requestLastCandle(source, connector, period, symbol, canceled);
     Cancellation? ticksCancellation;
     final fut = _chartData.then((chartData) {
       if (canceled) {
@@ -136,13 +134,15 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
         .listen((chartData) {
       final myId = ++requestId;
       final periodInMillis = period.value * 1000 * 60;
+      var start = (DateTime.now().millisecondsSinceEpoch / periodInMillis).ceil() * periodInMillis;
       connector
           .getChartLastRequest(
-              params: ChartRequest(
-        period: period,
-        start: (DateTime.now().millisecondsSinceEpoch / periodInMillis).ceil() * periodInMillis,
-        symbol: symbol,
-      ))
+        params: ChartRequest(
+          period: period,
+          start: start,
+          symbol: symbol,
+        ),
+      )
           .then((recentChartData) {
         if (canceled || recentReceivedId > myId || recentChartData.rateInfos.isEmpty) {
           return;
@@ -169,10 +169,9 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     final connector = Provider.of<XTBApiConnector>(context, listen: false);
     var currentPeriod = widget.period;
     var currentSymbol = widget.symbol.symbol;
-    final end = DateTime.now().subtract(
-        Duration(minutes: currentPeriod.value * _currentPeriodOffset));
-    final start =
-        end.subtract(Duration(minutes: currentPeriod.value * FETCH_PERIODS));
+    final end =
+        DateTime.now().subtract(Duration(minutes: currentPeriod.value * _currentPeriodOffset));
+    final start = end.subtract(Duration(minutes: currentPeriod.value * FETCH_PERIODS));
     _currentPeriodOffset += FETCH_PERIODS;
     return connector.getChartRangeRequest(
       params: ChartRangeRequest(
@@ -195,8 +194,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
             var data = snapshot.data!.rateInfos;
             return _defineCHart(data);
           } else if (snapshot.hasError) {
-            logInfo(
-                "CHART ERROR [${widget.symbol.symbol} ${widget.period.tag}] ${snapshot.error}");
+            logInfo("CHART ERROR [${widget.symbol.symbol} ${widget.period.tag}] ${snapshot.error}");
             if (snapshot.error is ErrorData) {
               return Text((snapshot.error as ErrorData).errorDescr);
             } else {
@@ -247,7 +245,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   ChartAxis _defineXAxis(List<CandleData> data) {
     return DateTimeCategoryAxis(
       dateFormat: _getDateFormat(),
-      majorGridLines: MajorGridLines(width: 0),
+      majorGridLines: const MajorGridLines(width: 0),
       intervalType: DateTimeIntervalType.auto,
     );
   }
@@ -261,8 +259,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       onRendererCreated: (ChartSeriesController controller) {
         _seriesController = controller;
       },
-      xValueMapper: (CandleData data, _) =>
-          DateTime.fromMillisecondsSinceEpoch(data.ctm),
+      xValueMapper: (CandleData data, _) => DateTime.fromMillisecondsSinceEpoch(data.ctm),
       lowValueMapper: (CandleData data, _) => data.low,
       highValueMapper: (CandleData data, _) => data.high,
       openValueMapper: (CandleData data, _) => data.open,
@@ -280,8 +277,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     }
   }
 
-  Widget _buildLoadMoreIndicatorView(
-      BuildContext context, ChartSwipeDirection direction) {
+  Widget _buildLoadMoreIndicatorView(BuildContext context, ChartSwipeDirection direction) {
     // To know whether reaches the end of the chart
     logInfo("CHART BUILD MORE $direction");
     if (direction == ChartSwipeDirection.start) {
@@ -292,7 +288,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
           builder: (BuildContext context, StateSetter stateSetter) {
             Widget widget;
             if (_isNeedToUpdateView) {
-              widget = CircularProgressIndicator();
+              widget = const CircularProgressIndicator();
               _fetchMoreData();
             } else {
               widget = Container();
