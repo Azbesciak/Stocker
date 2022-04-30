@@ -146,22 +146,26 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
         if (canceled || recentReceivedId > myId || recentChartData.rateInfos.isEmpty) {
           return;
         }
-        final candle = recentChartData.rateInfos.last;
-        if (chartData.rateInfos.isNotEmpty && chartData.rateInfos.last.ctm == candle.ctm) {
-          chartData.rateInfos.last = candle;
-          _seriesController?.updateDataSource(
-            updatedDataIndex: chartData.rateInfos.length - 1,
-          );
-        } else {
-          chartData.rateInfos.add(candle);
-          _seriesController?.updateDataSource(
-            addedDataIndexes: [chartData.rateInfos.length - 1],
-          );
-        }
+        _updateChartData(recentChartData, chartData);
         recentReceivedId = myId;
       });
     });
     return streamListen;
+  }
+
+  void _updateChartData(ChartData newData, ChartData chartData) {
+    final candle = newData.rateInfos.last;
+    if (chartData.rateInfos.isNotEmpty && chartData.rateInfos.last.ctm == candle.ctm) {
+      chartData.rateInfos.last = candle;
+      _seriesController?.updateDataSource(
+        updatedDataIndex: chartData.rateInfos.length - 1,
+      );
+    } else {
+      chartData.rateInfos.add(candle);
+      _seriesController?.updateDataSource(
+        addedDataIndexes: [chartData.rateInfos.length - 1],
+      );
+    }
   }
 
   Future<ChartData> _fetchData() {
@@ -191,7 +195,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
           if (snapshot.hasData) {
             _isLoadMoreView = true;
             var data = snapshot.data!.rateInfos;
-            return _defineCHart(data);
+            return _defineChart(data);
           } else if (snapshot.hasError) {
             logInfo("CHART ERROR [${widget.symbol.symbol} ${widget.period.tag}] ${snapshot.error}");
             if (snapshot.error is ErrorData) {
@@ -205,7 +209,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
         });
   }
 
-  SfCartesianChart _defineCHart(List<CandleData> data) {
+  SfCartesianChart _defineChart(List<CandleData> data) {
     return SfCartesianChart(
       // loadMoreIndicatorBuilder: _buildLoadMoreIndicatorView,
       onActualRangeChanged: _onActualRangeChanged,
