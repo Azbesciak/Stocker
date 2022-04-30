@@ -17,4 +17,7 @@ class ChartPeriod {
   static const ChartPeriod D1 = ChartPeriod._(value: 1440, tag: "D1");
   static const ChartPeriod W1 = ChartPeriod._(value: 10080, tag: "W1");
   static const ChartPeriod MN1 = ChartPeriod._(value: 43200, tag: "MN1");
+
+  @override
+  String toString() => tag;
 }
