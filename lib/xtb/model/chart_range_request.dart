@@ -1,4 +1,4 @@
-import 'chart_request.dart';
+import 'package:stocker/xtb/model/chart_request.dart';
 
 class ChartRangeRequest extends ChartRequest {
   final int end;

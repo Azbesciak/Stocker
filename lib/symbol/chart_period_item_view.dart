@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
-import '../ui_style.dart';
-import '../xtb/model/chart_period.dart';
+import 'package:stocker/ui_style.dart';
+import 'package:stocker/xtb/model/chart_period.dart';
 
 class ChartPeriodItemView extends StatelessWidget {
   final ChartPeriod period;
@@ -19,7 +18,7 @@ class ChartPeriodItemView extends StatelessWidget {
   Widget build(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: EdgeInsets.all(UIStyle.contentMarginSmall),
+      padding: const EdgeInsets.all(UIStyle.contentMarginSmall),
       child: Material(
         color: selected ? colorScheme.primary : colorScheme.background,
         borderRadius: BorderRadius.circular(UIStyle.popupsBorderRadius),
@@ -27,7 +26,7 @@ class ChartPeriodItemView extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(UIStyle.popupsBorderRadius),
           child: Padding(
-            padding: EdgeInsets.all(UIStyle.contentMarginMedium),
+            padding: const EdgeInsets.all(UIStyle.contentMarginMedium),
             child: Text(period.tag,
                 style: TextStyle(
                   color: selected

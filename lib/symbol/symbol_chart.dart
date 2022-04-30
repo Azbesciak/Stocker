@@ -5,16 +5,15 @@ import 'package:intl/intl.dart';
 import 'package:loggy/loggy.dart';
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:stocker/xtb/connector.dart';
+import 'package:stocker/xtb/model/candle_data.dart';
+import 'package:stocker/xtb/model/chart_data.dart';
 import 'package:stocker/xtb/model/chart_period.dart';
+import 'package:stocker/xtb/model/chart_range_request.dart';
+import 'package:stocker/xtb/model/chart_request.dart';
 import 'package:stocker/xtb/model/error_data.dart';
+import 'package:stocker/xtb/model/symbol_data.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-
-import '../xtb/connector.dart';
-import '../xtb/model/candle_data.dart';
-import '../xtb/model/chart_data.dart';
-import '../xtb/model/chart_range_request.dart';
-import '../xtb/model/chart_request.dart';
-import '../xtb/model/symbol_data.dart';
 
 class SymbolChartWidget extends StatefulWidget {
   final SymbolData symbol;
@@ -33,7 +32,6 @@ class SymbolChartWidget extends StatefulWidget {
 // https://www.syncfusion.com/kb/12535/how-to-lazily-load-more-data-to-the-chart-sfcartesianchart
 class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   static const FETCH_PERIODS = 300;
-  static const PADDING_CANDLES = 10;
   ChartSeriesController? _seriesController;
   late Future<ChartData> _chartData;
   late TrackballBehavior _trackballBehavior;
@@ -48,7 +46,8 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   @override
   void didUpdateWidget(covariant SymbolChartWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.period != widget.period || oldWidget.symbol != widget.symbol) {
+    if (oldWidget.period != widget.period ||
+        oldWidget.symbol != widget.symbol) {
       setState(() {
         _currentPeriodOffset = 0;
         _chartData.ignore();
@@ -91,7 +90,8 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
 
     var period = widget.period;
     var symbol = widget.symbol.symbol;
-    final streamListen = _requestLastCandle(source, connector, period, symbol, canceled);
+    final streamListen =
+        _requestLastCandle(source, connector, period, symbol, canceled);
     Cancellation? ticksCancellation;
     final fut = _chartData.then((chartData) {
       if (canceled) {
@@ -99,14 +99,15 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       }
 
       ticksCancellation = connector.getTickPrices(
-          symbol: symbol,
-          onResult: (data) {
-            if (!data.isSuccess()) {
-              logError("ERROR [$symbol]: $data");
-              return;
-            }
-            source.sink.add(chartData);
-          });
+        symbol: symbol,
+        onResult: (data) {
+          if (!data.isSuccess()) {
+            logError('ERROR [$symbol]: $data');
+            return;
+          }
+          source.sink.add(chartData);
+        },
+      );
     });
     _ticksCancellation = invokeOnce(() {
       fut.ignore();
@@ -133,7 +134,9 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     )
         .listen((chartData) {
       final myId = ++requestId;
-      var start = (DateTime.now().millisecondsSinceEpoch / period.valueInMs).ceil() * period.valueInMs;
+      var start =
+          (DateTime.now().millisecondsSinceEpoch / period.valueInMs).ceil() *
+              period.valueInMs;
       connector
           .getChartLastRequest(
         params: ChartRequest(
@@ -143,7 +146,9 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
         ),
       )
           .then((recentChartData) {
-        if (canceled || recentReceivedId > myId || recentChartData.rateInfos.isEmpty) {
+        if (canceled ||
+            recentReceivedId > myId ||
+            recentChartData.rateInfos.isEmpty) {
           return;
         }
         _updateChartData(recentChartData, chartData);
@@ -155,7 +160,8 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
 
   void _updateChartData(ChartData newData, ChartData chartData) {
     final candle = newData.rateInfos.last;
-    if (chartData.rateInfos.isNotEmpty && chartData.rateInfos.last.ctm == candle.ctm) {
+    if (chartData.rateInfos.isNotEmpty &&
+        chartData.rateInfos.last.ctm == candle.ctm) {
       chartData.rateInfos.last = candle;
       _seriesController?.updateDataSource(
         updatedDataIndex: chartData.rateInfos.length - 1,
@@ -172,9 +178,10 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     final connector = Provider.of<XTBApiConnector>(context, listen: false);
     var currentPeriod = widget.period;
     var currentSymbol = widget.symbol.symbol;
-    final end =
-        DateTime.now().subtract(Duration(minutes: currentPeriod.value * _currentPeriodOffset));
-    final start = end.subtract(Duration(minutes: currentPeriod.value * FETCH_PERIODS));
+    final end = DateTime.now().subtract(
+        Duration(minutes: currentPeriod.value * _currentPeriodOffset));
+    final start =
+        end.subtract(Duration(minutes: currentPeriod.value * FETCH_PERIODS));
     _currentPeriodOffset += FETCH_PERIODS;
     return connector.getChartRangeRequest(
       params: ChartRangeRequest(
@@ -190,23 +197,25 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<ChartData>(
-        future: _chartData,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            _isLoadMoreView = true;
-            var data = snapshot.data!.rateInfos;
-            return _defineChart(data);
-          } else if (snapshot.hasError) {
-            logInfo("CHART ERROR [${widget.symbol.symbol} ${widget.period.tag}] ${snapshot.error}");
-            if (snapshot.error is ErrorData) {
-              return Text((snapshot.error as ErrorData).errorDescr);
-            } else {
-              return Text('${snapshot.stackTrace}');
-            }
+      future: _chartData,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          _isLoadMoreView = true;
+          var data = snapshot.data!.rateInfos;
+          return _defineChart(data);
+        } else if (snapshot.hasError) {
+          logInfo(
+              'CHART ERROR [${widget.symbol.symbol} ${widget.period.tag}] ${snapshot.error}');
+          if (snapshot.error is ErrorData) {
+            return Text((snapshot.error as ErrorData).errorDescr);
+          } else {
+            return Text('${snapshot.stackTrace}');
           }
-          // By default, show a loading spinner.
-          return const CircularProgressIndicator();
-        });
+        }
+        // By default, show a loading spinner.
+        return const CircularProgressIndicator();
+      },
+    );
   }
 
   SfCartesianChart _defineChart(List<CandleData> data) {
@@ -262,7 +271,8 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       onRendererCreated: (ChartSeriesController controller) {
         _seriesController = controller;
       },
-      xValueMapper: (CandleData data, _) => DateTime.fromMillisecondsSinceEpoch(data.ctm),
+      xValueMapper: (CandleData data, _) =>
+          DateTime.fromMillisecondsSinceEpoch(data.ctm),
       lowValueMapper: (CandleData data, _) => data.low,
       highValueMapper: (CandleData data, _) => data.high,
       openValueMapper: (CandleData data, _) => data.open,
@@ -272,61 +282,65 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
 
   DateFormat _getDateFormat() {
     if (widget.period.value < ChartPeriod.H1.value) {
-      return DateFormat("HH:mm");
+      return DateFormat('HH:mm');
     } else if (widget.period.value < ChartPeriod.D1.value) {
-      return DateFormat("dd.MM HH:mm");
+      return DateFormat('dd.MM HH:mm');
     } else {
-      return DateFormat("dd.MM.yyyy");
+      return DateFormat('dd.MM.yyyy');
     }
   }
 
-  Widget _buildLoadMoreIndicatorView(BuildContext context, ChartSwipeDirection direction) {
+  Widget _buildLoadMoreIndicatorView(
+      BuildContext context, ChartSwipeDirection direction) {
     // To know whether reaches the end of the chart
-    logInfo("CHART BUILD MORE $direction");
+    logInfo('CHART BUILD MORE $direction');
     if (direction == ChartSwipeDirection.start) {
       _isNeedToUpdateView = true;
       _globalKey = GlobalKey<State>();
       return StatefulBuilder(
-          key: _globalKey,
-          builder: (BuildContext context, StateSetter stateSetter) {
-            Widget widget;
-            if (_isNeedToUpdateView) {
-              widget = const CircularProgressIndicator();
-              _fetchMoreData();
-            } else {
-              widget = Container();
-            }
-            return widget;
-          });
+        key: _globalKey,
+        builder: (BuildContext context, StateSetter stateSetter) {
+          Widget widget;
+          if (_isNeedToUpdateView) {
+            widget = const CircularProgressIndicator();
+            _fetchMoreData();
+          } else {
+            widget = Container();
+          }
+          return widget;
+        },
+      );
     } else {
       return SizedBox.fromSize(size: Size.zero);
     }
   }
 
   void _fetchMoreData() {
-    _chartData.then((oldData) => _fetchData().catchError((err) {
-          if (err is ErrorData && err.errorCode == ErrorData.NO_MORE_DATA_ERR) {
-            logInfo("NO MORE CHART DATA");
-            return oldData;
+    _chartData.then(
+      (oldData) => _fetchData().catchError((err) {
+        if (err is ErrorData && err.errorCode == ErrorData.NO_MORE_DATA_ERR) {
+          logInfo('NO MORE CHART DATA');
+          return oldData;
+        }
+        throw err;
+      }).then(
+        (newData) {
+          oldData.rateInfos.insertAll(0, newData.rateInfos);
+          _seriesController?.updateDataSource(
+            addedDataIndexes: List<int>.generate(
+              newData.rateInfos.length,
+              (index) => index,
+            ),
+          );
+          logInfo('new data arrived: ${oldData.rateInfos.length}');
+          _isLoadMoreView = true;
+          _isNeedToUpdateView = false;
+          if (_globalKey.currentState != null) {
+            (_globalKey.currentState as dynamic).setState(() {});
           }
-          throw err;
-        }).then(
-          (newData) {
-            oldData.rateInfos.insertAll(0, newData.rateInfos);
-            _seriesController?.updateDataSource(
-              addedDataIndexes: List<int>.generate(
-                newData.rateInfos.length,
-                (index) => index,
-              ),
-            );
-            logInfo("new data arrived: ${oldData.rateInfos.length}");
-            _isLoadMoreView = true;
-            _isNeedToUpdateView = false;
-            if (_globalKey.currentState != null) {
-              (_globalKey.currentState as dynamic).setState(() {});
-            }
-          },
-        ));
+        },
+      ),
+    );
   }
 
   @override

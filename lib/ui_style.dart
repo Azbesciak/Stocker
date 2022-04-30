@@ -22,8 +22,10 @@ import 'package:flutter/material.dart';
 /// Helper class that contains all definitions of colors, fonts, sizes and other UI parameters that are used in
 /// the application.
 class UIStyle {
-  static const Color buttonPrimaryColor = Color(0xFFF0FF6B); // Primary button color
-  static const Color buttonSecondaryColor = Color(0xFF178E87); // Secondary button color
+  static const Color buttonPrimaryColor =
+      Color(0xFFF0FF6B); // Primary button color
+  static const Color buttonSecondaryColor =
+      Color(0xFF178E87); // Secondary button color
   static const Color accuracyCircleColor = Color(0x550BC7C2);
   static const Color selectedListTileColor = Color(0xFFF5F5F5);
   static const Color acceptedConsentColor = Color(0xFF80E3C1);
@@ -102,10 +104,13 @@ class UIStyle {
   // HERE colors
   static const Color _lightBackground = Color.fromARGB(0xff, 0xf5, 0xf5, 0xf5);
   static const Color _lightAccent = Color.fromARGB(0xff, 0xA0, 0xf8, 0x12);
-  static const Color _lightAccentSecondary = Color.fromARGB(0xff, 0x16, 0x71, 0x2A);
+  static const Color _lightAccentSecondary =
+      Color.fromARGB(0xff, 0x16, 0x71, 0x2A);
   static const Color _lightForeground = Color.fromARGB(0xff, 0x27, 0x2d, 0x37);
-  static const Color _lightForegroundSecondary = Color.fromARGB(0xff, 0x6f, 0x73, 0x7a);
-  static const Color _lightForegroundHint = Color.fromARGB(0xff, 0xb7, 0xb9, 0xbc);
+  static const Color _lightForegroundSecondary =
+      Color.fromARGB(0xff, 0x6f, 0x73, 0x7a);
+  static const Color _lightForegroundHint =
+      Color.fromARGB(0xff, 0xb7, 0xb9, 0xbc);
 
   static final ThemeData lightTheme = ThemeData(
     scaffoldBackgroundColor: _lightBackground,
@@ -176,7 +181,8 @@ class UIStyle {
     subtitle2: _lightHintTextStyle,
   );
 
-  static const InputDecorationTheme _lightInputDecorationTheme = InputDecorationTheme(
+  static const InputDecorationTheme _lightInputDecorationTheme =
+      InputDecorationTheme(
     filled: false,
     fillColor: Colors.transparent,
     border: UnderlineInputBorder(

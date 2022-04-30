@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:stocker/symbol/chart_period_item_view.dart';
 import 'package:stocker/ui_style.dart';
 import 'package:stocker/xtb/model/chart_period.dart';
-
-import 'chart_period_item_view.dart';
 
 class ChartPeriodSelector extends StatefulWidget {
   final void Function(ChartPeriod period) periodChanged;

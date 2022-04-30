@@ -1,8 +1,7 @@
 import 'dart:math';
 
+import 'package:stocker/xtb/json_helper.dart';
 import 'package:stocker/xtb/model/candle_data.dart';
-
-import '../json_helper.dart';
 
 class ChartData {
   final int digits;
@@ -28,7 +27,10 @@ class ChartData {
     final factor = pow(10, digits);
     return ChartData(
       digits: digits,
-      rateInfos: extractJsonList(map['rateInfos'], (d) => CandleData.fromRelativeMap(d, factor)),
+      rateInfos: extractJsonList(
+        map['rateInfos'],
+        (d) => CandleData.fromRelativeMap(d, factor),
+      ),
     );
   }
 }

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:loggy/loggy.dart';
 import 'package:provider/provider.dart';
+import 'package:stocker/favourites_page.dart';
+import 'package:stocker/symbol/symbol_page.dart';
 import 'package:stocker/xtb/connector.dart';
 import 'package:stocker/xtb/json_helper.dart';
-import 'package:stocker/symbol/symbol_page.dart';
-
-import 'favourites_page.dart';
 
 void main() {
   Loggy.initLoggy(logPrinter: PrettyPrinter(showColors: true));
@@ -30,41 +29,41 @@ class StockerApp extends StatelessWidget {
         )
       ],
       child: MaterialApp(
-          title: 'Stocker',
-          themeMode: ThemeMode.dark,
-          darkTheme: ThemeData.dark().copyWith(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.red,
-              brightness: Brightness.dark,
-            ),
+        title: 'Stocker',
+        themeMode: ThemeMode.dark,
+        darkTheme: ThemeData.dark().copyWith(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.red,
+            brightness: Brightness.dark,
           ),
-          theme: ThemeData.light().copyWith(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.red,
-              brightness: Brightness.light,
-            ),
+        ),
+        theme: ThemeData.light().copyWith(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.red,
+            brightness: Brightness.light,
           ),
-          initialRoute: FavouritesPage.navRoute,
-          onGenerateRoute: (RouteSettings settings) {
-            Map<String, WidgetBuilder> routes = {
-              // LandingPage.navRoute: (BuildContext context) => LandingPage(),
-              FavouritesPage.navRoute: (BuildContext context) =>
-                  FavouritesPage(),
-              SymbolPage.navRoute: (BuildContext context) {
-                JsonObj arguments = settings.arguments as JsonObj;
-                assert(arguments.containsKey('symbol'));
-                return SymbolPage(
-                  symbol: arguments['symbol'],
-                );
-              },
-            };
-            logInfo('NAV: ${settings.name}, PARAMS: ${settings.arguments}');
-            WidgetBuilder builder = routes[settings.name]!;
-            return MaterialPageRoute(
-              builder: (ctx) => builder(ctx),
-              settings: settings,
-            );
-          }),
+        ),
+        initialRoute: FavouritesPage.navRoute,
+        onGenerateRoute: (RouteSettings settings) {
+          Map<String, WidgetBuilder> routes = {
+            // LandingPage.navRoute: (BuildContext context) => LandingPage(),
+            FavouritesPage.navRoute: (BuildContext context) => FavouritesPage(),
+            SymbolPage.navRoute: (BuildContext context) {
+              JsonObj arguments = settings.arguments as JsonObj;
+              assert(arguments.containsKey('symbol'));
+              return SymbolPage(
+                symbol: arguments['symbol'],
+              );
+            },
+          };
+          logInfo('NAV: ${settings.name}, PARAMS: ${settings.arguments}');
+          WidgetBuilder builder = routes[settings.name]!;
+          return MaterialPageRoute(
+            builder: (ctx) => builder(ctx),
+            settings: settings,
+          );
+        },
+      ),
     );
   }
 }

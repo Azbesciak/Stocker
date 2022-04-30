@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class LandingPage extends StatelessWidget {
-  static const navRoute = "/";
+  static const navRoute = '/';
   const LandingPage({Key? key}) : super(key: key);
 
   @override

@@ -1,4 +1,4 @@
-import 'error_data.dart';
+import 'package:stocker/xtb/model/error_data.dart';
 
 class Result<T> {
   final T? value;
@@ -13,9 +13,9 @@ class Result<T> {
   @override
   String toString() {
     if (isSuccess()) {
-      return "Result(success: $value)";
+      return 'Result(success: $value)';
     } else {
-      return "Result(failure: $error)";
+      return 'Result(failure: $error)';
     }
   }
 }

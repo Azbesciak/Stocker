@@ -2,21 +2,20 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:loggy/loggy.dart';
+import 'package:stocker/xtb/json_helper.dart';
 import 'package:stocker/xtb/model/calendar_data.dart';
+import 'package:stocker/xtb/model/candle_data.dart';
 import 'package:stocker/xtb/model/chart_data.dart';
+import 'package:stocker/xtb/model/chart_range_request.dart';
 import 'package:stocker/xtb/model/chart_request.dart';
 import 'package:stocker/xtb/model/credentials.dart';
+import 'package:stocker/xtb/model/error_data.dart';
+import 'package:stocker/xtb/model/news_data.dart';
+import 'package:stocker/xtb/model/result.dart';
+import 'package:stocker/xtb/model/symbol_data.dart';
+import 'package:stocker/xtb/model/ticks.dart';
 import 'package:stocker/xtb/model/trading_hours_data.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-
-import 'json_helper.dart';
-import 'model/candle_data.dart';
-import 'model/chart_range_request.dart';
-import 'model/error_data.dart';
-import 'model/news_data.dart';
-import 'model/result.dart';
-import 'model/symbol_data.dart';
-import 'model/ticks.dart';
 // http://developers.xstore.pro/documentation/
 
 typedef Cancellation = void Function();
@@ -33,7 +32,7 @@ Cancellation invokeOnce(Cancellation cancellation) {
 }
 
 extension XTBResponseExtension on JsonObj {
-  bool get status => this["status"] != false;
+  bool get status => this['status'] != false;
 }
 
 typedef Callback<T> = void Function(T result);
@@ -67,9 +66,9 @@ class XTBApiConnector {
     _channel = _spawnNewChannel(url);
     _channel.stream.listen((event) {
       var parsedResponse = jsonDecode(event);
-      final String responseId = parsedResponse["customTag"];
+      final String responseId = parsedResponse['customTag'];
       final sub = _streamSubs[responseId];
-      logInfo("RES [$responseId]: ${sub?.command} ${trimIfTooLong(event)}");
+      logInfo('RES [$responseId]: ${sub?.command} ${trimIfTooLong(event)}');
       if (sub != null) {
         sub.callback(parsedResponse);
         if (sub.cancellation == null) {
@@ -90,7 +89,7 @@ class XTBApiConnector {
     required WebSocketChannel channel,
     JsonObj? inlineArgs,
   }) {
-    JsonObj request = {"command": String};
+    JsonObj request = {'command': String};
     if (inlineArgs != null) {
       request.addAll(inlineArgs);
     }
@@ -103,7 +102,7 @@ class XTBApiConnector {
     for (final element in _streamCancellations.entries.toList()) {
       element.value();
     }
-    _executeCommandNoResponse(command: "logout", channel: _channel);
+    _executeCommandNoResponse(command: 'logout', channel: _channel);
     _channel.sink.close();
   }
 
@@ -115,14 +114,14 @@ class XTBApiConnector {
     JsonObj? inlineArgs,
   }) {
     final id = (++_outgoingRequestId).toString();
-    JsonObj request = {"command": command, "customTag": id};
+    JsonObj request = {'command': command, 'customTag': id};
     if (arguments != null) {
-      request["arguments"] = arguments;
+      request['arguments'] = arguments;
     }
     if (inlineArgs != null) {
       request.addAll(inlineArgs);
     }
-    logInfo("REQ [$id]: $command arguments: $arguments, inline: $inlineArgs");
+    logInfo('REQ [$id]: $command arguments: $arguments, inline: $inlineArgs');
     _streamSubs[id] = XTBApiSub(
       callback: onResult,
       cancellation: cancellation,
@@ -161,10 +160,10 @@ class XTBApiConnector {
   }) {
     final channel = _spawnNewChannel(streamUrl);
     channel.stream.listen((res) {
-      logInfo("RES [$subscribeCommand]: $res");
+      logInfo('RES [$subscribeCommand]: $res');
       final result = jsonDecode(res) as JsonObj;
       if (result.status) {
-        onResult(Result.success(value: mapper(result["data"])));
+        onResult(Result.success(value: mapper(result['data'])));
       } else {
         onResult(Result.failure(error: ErrorData.fromMap(result)));
       }
@@ -177,64 +176,64 @@ class XTBApiConnector {
     _streamCancellations[id] = cancellation;
 
     JsonObj request = {
-      "streamSessionId": _currentSessionId,
-      "command": subscribeCommand,
+      'streamSessionId': _currentSessionId,
+      'command': subscribeCommand,
     };
     if (inlineArgs != null) {
       request.addAll(inlineArgs);
     }
     var encoded = jsonEncode(request);
-    logInfo("REQ [$subscribeCommand]: $encoded");
+    logInfo('REQ [$subscribeCommand]: $encoded');
     channel.sink.add(encoded);
     return cancellation;
   }
 
   Future<JsonObj> login(Credentials credentials) {
     return _executeFutureCommand(
-      command: "login",
+      command: 'login',
       mapper: identityMapper,
       arguments: {
-        "userId": credentials.userId,
-        "password": credentials.password,
-        "appName": appName,
+        'userId': credentials.userId,
+        'password': credentials.password,
+        'appName': appName,
       },
     ).then((value) {
-      _currentSessionId = value["streamSessionId"];
+      _currentSessionId = value['streamSessionId'];
       return value;
     });
   }
 
   Future<List<SymbolData>> getAllSymbols() {
     return _executeFutureCommand(
-        command: "getAllSymbols",
+        command: 'getAllSymbols',
         mapper: returnDataMapper(arrayDataMapper(SymbolData.fromMap)));
   }
 
   Future<JsonObj> getCurrentUserData() {
     return _executeFutureCommand(
-      command: "getCurrentUserData",
+      command: 'getCurrentUserData',
       mapper: identityMapper,
     );
   }
 
   Future<List<JsonObj>> getTrades({bool openedOnly = true}) {
     return _executeFutureCommand(
-      command: "getTrades",
+      command: 'getTrades',
       mapper: returnDataMapper(arrayDataMapper(identityMapper)),
-      arguments: {"openedOnly": openedOnly},
+      arguments: {'openedOnly': openedOnly},
     );
   }
 
   Future<List<CalendarData>> getCalendar() {
     return _executeFutureCommand(
-      command: "getCalendar",
+      command: 'getCalendar',
       mapper: returnDataMapper(arrayDataMapper(CalendarData.fromMap)),
     );
   }
 
   Future<ChartData> getChartRangeRequest({required ChartRangeRequest params}) {
     return _executeFutureCommand(
-      command: "getChartRangeRequest",
+      command: 'getChartRangeRequest',
       arguments: {'info': params.toMap()},
       mapper: returnDataMapper(ChartData.fromMap),
     );
@@ -242,7 +241,7 @@ class XTBApiConnector {
 
   Future<ChartData> getChartLastRequest({required ChartRequest params}) {
     return _executeFutureCommand(
-      command: "getChartLastRequest",
+      command: 'getChartLastRequest',
       arguments: {'info': params.toMap()},
       mapper: returnDataMapper(ChartData.fromMap),
     );
@@ -252,9 +251,9 @@ class XTBApiConnector {
     required List<String> symbols,
   }) {
     return _executeFutureCommand(
-      command: "getTradingHours",
+      command: 'getTradingHours',
       mapper: returnDataMapper(arrayDataMapper(TradingHoursData.fromMap)),
-      arguments: {"symbols": symbols},
+      arguments: {'symbols': symbols},
     );
   }
 
@@ -263,8 +262,8 @@ class XTBApiConnector {
     required Callback<Result<CandleData>> onResult,
   }) {
     return _executeStreamCommand(
-      subscribeCommand: "getCandles",
-      unsubscribeCommand: "stopCandles",
+      subscribeCommand: 'getCandles',
+      unsubscribeCommand: 'stopCandles',
       onResult: onResult,
       mapper: CandleData.fromMap,
     );
@@ -274,8 +273,8 @@ class XTBApiConnector {
     required Callback<Result<NewsData>> onResult,
   }) {
     return _executeStreamCommand(
-      subscribeCommand: "getNews",
-      unsubscribeCommand: "stopNews",
+      subscribeCommand: 'getNews',
+      unsubscribeCommand: 'stopNews',
       onResult: onResult,
       mapper: NewsData.fromMap,
     );
@@ -286,9 +285,9 @@ class XTBApiConnector {
     required Callback<Result<TicksData>> onResult,
   }) {
     return _executeStreamCommand(
-      subscribeCommand: "getTickPrices",
-      unsubscribeCommand: "stopTickPrices",
-      inlineArgs: {"symbol": symbol},
+      subscribeCommand: 'getTickPrices',
+      unsubscribeCommand: 'stopTickPrices',
+      inlineArgs: {'symbol': symbol},
       onResult: onResult,
       mapper: TicksData.fromMap,
     );

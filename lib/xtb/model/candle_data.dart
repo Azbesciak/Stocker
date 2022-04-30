@@ -15,7 +15,10 @@ class CandleData {
     required this.vol,
   });
 
-  factory CandleData.fromRelativeMap(Map<String, dynamic> map, [num factor = 1]) {
+  factory CandleData.fromRelativeMap(
+    Map<String, dynamic> map, [
+    num factor = 1,
+  ]) {
     var openPrice = map['open'] as double;
     return CandleData(
       open: openPrice / factor,
@@ -51,5 +54,4 @@ class CandleData {
 
   @override
   String toString() => toMap().toString();
-
 }

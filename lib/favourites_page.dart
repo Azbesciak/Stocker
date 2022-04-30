@@ -6,13 +6,12 @@ import 'package:provider/provider.dart';
 import 'package:stocker/dev_credentials.dart';
 import 'package:stocker/symbol/symbol_page.dart';
 import 'package:stocker/ui_style.dart';
+import 'package:stocker/utils.dart';
+import 'package:stocker/xtb/connector.dart';
 import 'package:stocker/xtb/model/symbol_data.dart';
 
-import 'utils.dart';
-import 'xtb/connector.dart';
-
 class FavouritesPage extends StatefulWidget {
-  static const navRoute = "/";
+  static const navRoute = '/';
 
   const FavouritesPage({Key? key}) : super(key: key);
 
