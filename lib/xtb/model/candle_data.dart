@@ -1,17 +1,17 @@
 class CandleData {
-  final double close;
-  final int ctm;
-  final double high;
-  final double low;
   final double open;
+  final double close;
+  final double low;
+  final double high;
+  final int ctm;
   final double vol;
 
   const CandleData({
-    required this.close,
-    required this.ctm,
-    required this.high,
-    required this.low,
     required this.open,
+    required this.close,
+    required this.low,
+    required this.high,
+    required this.ctm,
     required this.vol,
   });
 
