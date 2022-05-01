@@ -20,4 +20,18 @@ class ChartPeriod {
 
   @override
   String toString() => tag;
+
+  static ChartPeriod? of(String tag) {
+    // switch case requires constant value, whereas field does not have it...
+    if (tag == M1.tag) return M1;
+    if (tag == M5.tag) return M5;
+    if (tag == M15.tag) return M15;
+    if (tag == M30.tag) return M30;
+    if (tag == H1.tag) return H1;
+    if (tag == H4.tag) return H4;
+    if (tag == D1.tag) return D1;
+    if (tag == W1.tag) return W1;
+    if (tag == MN1.tag) return MN1;
+    return null;
+  }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:loggy/loggy.dart';
 import 'package:provider/provider.dart';
 import 'package:stocker/favourites_page.dart';
+import 'package:stocker/preferences/preferences.dart';
+import 'package:stocker/preferences/shared_preferences.dart';
 import 'package:stocker/symbol/symbol_page.dart';
 import 'package:stocker/xtb/connector.dart';
 import 'package:stocker/xtb/json_helper.dart';
@@ -19,6 +21,9 @@ class StockerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<Preferences>(
+          create: (context) => SharedPreferences(),
+        ),
         Provider<XTBApiConnector>(
           create: (context) => XTBApiConnector(
             url: 'wss://ws.xtb.com/demo',

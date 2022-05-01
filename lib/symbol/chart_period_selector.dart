@@ -18,7 +18,7 @@ class ChartPeriodSelector extends StatefulWidget {
 }
 
 class _ChartPeriodSelectorState extends State<ChartPeriodSelector> {
-  static const List<ChartPeriod> PERIODS = [
+  static const List<ChartPeriod> PERIODS = const [
     ChartPeriod.M1,
     ChartPeriod.M5,
     ChartPeriod.M15,
@@ -32,6 +32,16 @@ class _ChartPeriodSelectorState extends State<ChartPeriodSelector> {
 
   bool _extended = false;
   late ChartPeriod _selected;
+
+  @override
+  void didUpdateWidget(covariant ChartPeriodSelector oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialPeriod != widget.initialPeriod) {
+      setState(() {
+        _selected = widget.initialPeriod;
+      });
+    }
+  }
 
   _updateSelection(ChartPeriod selected) {
     setState(() {
