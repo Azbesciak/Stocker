@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:loggy/loggy.dart';
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:stocker/symbol/chart_data_padding_manager.dart';
 import 'package:stocker/xtb/connector.dart';
 import 'package:stocker/xtb/model/candle_data.dart';
 import 'package:stocker/xtb/model/chart_data.dart';
@@ -32,6 +33,7 @@ class SymbolChartWidget extends StatefulWidget {
 // https://www.syncfusion.com/kb/12535/how-to-lazily-load-more-data-to-the-chart-sfcartesianchart
 class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   static const FETCH_PERIODS = 300;
+  static const CHART_PADDING = 10;
   ChartSeriesController? _seriesController;
   late Future<ChartData> _chartData;
   late TrackballBehavior _trackballBehavior;
@@ -42,6 +44,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   int _currentPeriodOffset = 0;
   late GlobalKey<State> _globalKey;
   Cancellation? _ticksCancellation;
+  late ChartDataPaddingManager _paddingManager;
 
   @override
   void didUpdateWidget(covariant SymbolChartWidget oldWidget) {
@@ -49,17 +52,26 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     if (oldWidget.period != widget.period ||
         oldWidget.symbol != widget.symbol) {
       setState(() {
-        _currentPeriodOffset = 0;
         _chartData.ignore();
-        _chartData = _fetchData();
+        _fetchNewData();
         _updateRecentData();
       });
     }
   }
 
+  void _fetchNewData() {
+    _currentPeriodOffset = 0;
+    var period = widget.period;
+    _chartData = _fetchData().then((value) {
+      _paddingManager.addPadding(value.rateInfos, period);
+      return value;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
+    _paddingManager = ChartDataPaddingManager(paddingCandles: CHART_PADDING);
     _trackballBehavior = TrackballBehavior(
       enable: false,
       activationMode: ActivationMode.singleTap,
@@ -78,7 +90,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     _globalKey = GlobalKey();
     _isLoadMoreView = false;
     _isNeedToUpdateView = false;
-    _chartData = _fetchData();
+    _fetchNewData();
     _updateRecentData();
   }
 
@@ -160,18 +172,12 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
 
   void _updateChartData(ChartData newData, ChartData chartData) {
     final candle = newData.rateInfos.last;
-    if (chartData.rateInfos.isNotEmpty &&
-        chartData.rateInfos.last.ctm == candle.ctm) {
-      chartData.rateInfos.last = candle;
-      _seriesController?.updateDataSource(
-        updatedDataIndex: chartData.rateInfos.length - 1,
-      );
-    } else {
-      chartData.rateInfos.add(candle);
-      _seriesController?.updateDataSource(
-        addedDataIndexes: [chartData.rateInfos.length - 1],
-      );
-    }
+    var update = _paddingManager.updateChartData(
+        chartData.rateInfos, candle, widget.period);
+    _seriesController?.updateDataSource(
+      updatedDataIndexes: update.updated,
+      addedDataIndexes: update.added,
+    );
   }
 
   Future<ChartData> _fetchData() {
@@ -273,10 +279,14 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       },
       xValueMapper: (CandleData data, _) =>
           DateTime.fromMillisecondsSinceEpoch(data.ctm),
-      lowValueMapper: (CandleData data, _) => data.low,
-      highValueMapper: (CandleData data, _) => data.high,
-      openValueMapper: (CandleData data, _) => data.open,
-      closeValueMapper: (CandleData data, _) => data.close,
+      lowValueMapper: (CandleData data, _) =>
+          _paddingManager.isPadding(data) ? null : data.low,
+      highValueMapper: (CandleData data, _) =>
+          _paddingManager.isPadding(data) ? null : data.high,
+      openValueMapper: (CandleData data, _) =>
+          _paddingManager.isPadding(data) ? null : data.open,
+      closeValueMapper: (CandleData data, _) =>
+          _paddingManager.isPadding(data) ? null : data.close,
     );
   }
 
