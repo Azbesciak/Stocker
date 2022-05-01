@@ -173,7 +173,10 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   void _updateChartData(ChartData newData, ChartData chartData) {
     final candle = newData.rateInfos.last;
     var update = _paddingManager.updateChartData(
-        chartData.rateInfos, candle, widget.period);
+      chartData.rateInfos,
+      candle,
+      widget.period,
+    );
     _seriesController?.updateDataSource(
       updatedDataIndexes: update.updated,
       addedDataIndexes: update.added,
@@ -211,7 +214,8 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
           return _defineChart(data);
         } else if (snapshot.hasError) {
           logInfo(
-              'CHART ERROR [${widget.symbol.symbol} ${widget.period.tag}] ${snapshot.error}');
+            'CHART ERROR [${widget.symbol.symbol} ${widget.period.tag}] ${snapshot.error}',
+          );
           if (snapshot.error is ErrorData) {
             return Text((snapshot.error as ErrorData).errorDescr);
           } else {
