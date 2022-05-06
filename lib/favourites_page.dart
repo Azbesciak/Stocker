@@ -117,12 +117,18 @@ class _FavouritesPageState extends State<FavouritesPage> {
             if (snapshot.hasData) {
               var data = _filterData(snapshot.data!, _filter);
               Widget _itemBuilder(
-                  BuildContext context, int index, List<SymbolData> items) {
+                BuildContext context,
+                int index,
+                List<SymbolData> items,
+              ) {
                 return SymbolWidget(symbol: items[index]);
               }
 
               Widget _headerBuilder(
-                  BuildContext context, bool isExpanded, String key) {
+                BuildContext context,
+                bool isExpanded,
+                String key,
+              ) {
                 _expansions[key] = isExpanded;
                 return ListTile(title: Text(key));
               }
@@ -144,46 +150,49 @@ class _FavouritesPageState extends State<FavouritesPage> {
                           var group = data.groups[e]!;
                           var maxHeight =
                               MediaQuery.of(context).size.height / 3 * 2;
+                          var groupExpanded = _expansions[e] == true;
                           return ExpansionPanel(
-                              isExpanded: _expansions[e] == true,
-                              canTapOnHeader: true,
-                              headerBuilder: (ctx, expanded) =>
-                                  _headerBuilder(context, expanded, e),
-                              body: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  maxHeight: maxHeight,
-                                ),
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  physics: const ClampingScrollPhysics(),
-                                  itemBuilder: (ctx, i) =>
-                                      _itemBuilder(ctx, i, group),
-                                  itemCount:
-                                      _expansions[e] == true ? group.length : 0,
-                                ),
-                              ));
+                            isExpanded: groupExpanded,
+                            canTapOnHeader: true,
+                            headerBuilder: (ctx, expanded) =>
+                                _headerBuilder(context, expanded, e),
+                            body: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxHeight: maxHeight,
+                              ),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: const ClampingScrollPhysics(),
+                                itemBuilder: (ctx, i) =>
+                                    _itemBuilder(ctx, i, group),
+                                itemCount: groupExpanded ? group.length : 0,
+                              ),
+                            ),
+                          );
                         })
                       ],
                     ),
                   ),
                   Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Card(
-                          elevation: 2,
-                          child: Padding(
-                            padding: EdgeInsets.all(UIStyle.contentMarginSmall),
-                            child: TextField(
-                              onChanged: (v) {
-                                setState(() {
-                                  _filter = v;
-                                });
-                              },
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                labelText: 'Query',
-                              ),
-                            ),
-                          )))
+                    alignment: Alignment.bottomCenter,
+                    child: Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: EdgeInsets.all(UIStyle.contentMarginSmall),
+                        child: TextField(
+                          onChanged: (v) {
+                            setState(() {
+                              _filter = v;
+                            });
+                          },
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'Query',
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
                 ],
               );
             } else if (snapshot.hasError) {
@@ -202,8 +211,18 @@ class _FavouritesPageState extends State<FavouritesPage> {
     var searchableFilter = filter.trim().toLowerCase();
     return searchableFilter.isEmpty
         ? symbols
-        : List.of(symbols.where((e) =>
-            _containsPhrase(e.symbol.toLowerCase(), searchableFilter) ||
-            _containsPhrase(e.description.toLowerCase(), searchableFilter)));
+        : List.of(
+            symbols.where(
+              (e) =>
+                  _containsPhrase(
+                    e.symbol.toLowerCase(),
+                    searchableFilter,
+                  ) ||
+                  _containsPhrase(
+                    e.description.toLowerCase(),
+                    searchableFilter,
+                  ),
+            ),
+          );
   }
 }
