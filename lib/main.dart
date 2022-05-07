@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:loggy/loggy.dart';
 import 'package:provider/provider.dart';
-import 'package:stocker/favourites_page.dart';
 import 'package:stocker/preferences/preferences.dart';
 import 'package:stocker/preferences/shared_preferences.dart';
 import 'package:stocker/symbol/symbol_page.dart';
+import 'package:stocker/symbols_list/symbols_list_page.dart';
 import 'package:stocker/xtb/connector.dart';
 import 'package:stocker/xtb/json_helper.dart';
 
@@ -48,11 +48,12 @@ class StockerApp extends StatelessWidget {
             brightness: Brightness.light,
           ),
         ),
-        initialRoute: FavouritesPage.navRoute,
+        initialRoute: SymbolsListPage.navRoute,
         onGenerateRoute: (RouteSettings settings) {
           Map<String, WidgetBuilder> routes = {
             // LandingPage.navRoute: (BuildContext context) => LandingPage(),
-            FavouritesPage.navRoute: (BuildContext context) => FavouritesPage(),
+            SymbolsListPage.navRoute: (BuildContext context) =>
+                SymbolsListPage(),
             SymbolPage.navRoute: (BuildContext context) {
               JsonObj arguments = settings.arguments as JsonObj;
               assert(arguments.containsKey('symbol'));

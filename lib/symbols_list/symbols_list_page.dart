@@ -4,60 +4,23 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stocker/dev_credentials.dart';
-import 'package:stocker/symbol/symbol_page.dart';
-import 'package:stocker/ui_style.dart';
+import 'package:stocker/symbols_list/filter_data.dart';
+import 'package:stocker/symbols_list/symbol_filter.dart';
+import 'package:stocker/symbols_list/symbol_list_item.dart';
 import 'package:stocker/utils.dart';
 import 'package:stocker/xtb/connector.dart';
 import 'package:stocker/xtb/model/symbol_data.dart';
 
-class FavouritesPage extends StatefulWidget {
+class SymbolsListPage extends StatefulWidget {
   static const navRoute = '/';
 
-  const FavouritesPage({Key? key}) : super(key: key);
+  const SymbolsListPage({Key? key}) : super(key: key);
 
   @override
-  State<FavouritesPage> createState() => _FavouritesPageState();
+  State<SymbolsListPage> createState() => _SymbolsListPageState();
 }
 
-@immutable
-class SymbolWidget extends StatelessWidget {
-  final SymbolData symbol;
-
-  const SymbolWidget({Key? key, required this.symbol}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Text(symbol.symbol),
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            SymbolPage.navRoute,
-            arguments: {'symbol': symbol},
-          );
-        },
-        title: Text(symbol.description),
-      ),
-    );
-  }
-}
-
-class FilteredData {
-  final List<SymbolData> original;
-  final String filter;
-  final List<String> keys;
-  final Map<String, List<SymbolData>> groups;
-
-  const FilteredData({
-    required this.original,
-    required this.filter,
-    required this.keys,
-    required this.groups,
-  });
-}
-
-class _FavouritesPageState extends State<FavouritesPage> {
+class _SymbolsListPageState extends State<SymbolsListPage> {
   final Completer<List<SymbolData>> _symbols = Completer();
   String _filter = '';
   FilteredData? _recentFilterValue;
@@ -121,7 +84,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
                 int index,
                 List<SymbolData> items,
               ) {
-                return SymbolWidget(symbol: items[index]);
+                return SymbolListItemWidget(symbol: items[index]);
               }
 
               Widget _headerBuilder(
@@ -175,23 +138,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
                   ),
                   Align(
                     alignment: Alignment.bottomCenter,
-                    child: Card(
-                      elevation: 2,
-                      child: Padding(
-                        padding: EdgeInsets.all(UIStyle.contentMarginSmall),
-                        child: TextField(
-                          onChanged: (v) {
-                            setState(() {
-                              _filter = v;
-                            });
-                          },
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            labelText: 'Query',
-                          ),
-                        ),
-                      ),
-                    ),
+                    child: SymbolFilter(onInputChange: _updateFilterValue),
                   )
                 ],
               );
@@ -205,6 +152,12 @@ class _FavouritesPageState extends State<FavouritesPage> {
         ),
       ),
     );
+  }
+
+  void _updateFilterValue(String v) {
+    setState(() {
+      _filter = v;
+    });
   }
 
   List<SymbolData> _filterSymbols(List<SymbolData> symbols, String filter) {
