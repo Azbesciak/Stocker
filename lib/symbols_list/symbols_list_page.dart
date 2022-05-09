@@ -12,26 +12,27 @@ class SymbolsListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-        providers: [
-          Provider<FilteredSymbolsSource>(
-            create: (ctx) => FilteredSymbolsSource(ctx),
-          )
-        ],
-        builder: (BuildContext ctx, _) => Scaffold(
-              body: Center(
-                child: Stack(
-                  children: [
-                    SymbolsList(),
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: SymbolFilter(
-                        onInputChange: (v) => _updateFilterValue(ctx, v),
-                      ),
-                    )
-                  ],
+      providers: [
+        Provider<FilteredSymbolsSource>(
+          create: (ctx) => FilteredSymbolsSource(ctx),
+        )
+      ],
+      builder: (BuildContext ctx, _) => Scaffold(
+        body: Center(
+          child: Stack(
+            children: [
+              SymbolsList(),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SymbolFilter(
+                  onInputChange: (v) => _updateFilterValue(ctx, v),
                 ),
-              ),
-            ));
+              )
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _updateFilterValue(BuildContext context, String v) {
