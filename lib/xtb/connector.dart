@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:loggy/loggy.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:stocker/xtb/json_helper.dart';
 import 'package:stocker/xtb/model/calendar_data.dart';
 import 'package:stocker/xtb/model/candle_data.dart';
@@ -53,7 +54,8 @@ class XTBApiConnector {
   late WebSocketChannel _channel;
   final Map<String, XTBApiSub> _streamSubs = {};
   int _outgoingRequestId = 0;
-  String? _currentSessionId;
+  final BehaviorSubject<String?> _currentSessionId$ =
+      BehaviorSubject.seeded(null);
   final Map<int, Cancellation> _streamCancellations = {};
 
   XTBApiConnector({
@@ -98,7 +100,7 @@ class XTBApiConnector {
 
   void dispose() {
     _streamSubs.clear();
-    _currentSessionId = null;
+    _currentSessionId$.add(null);
     for (final element in _streamCancellations.entries.toList()) {
       element.value();
     }
@@ -135,7 +137,11 @@ class XTBApiConnector {
     required String command,
     required Mapper<JsonObj, T> mapper,
     JsonObj? arguments,
-  }) {
+    bool requiresAuth = true,
+  }) async {
+    if (requiresAuth) {
+      await awaitLoggedIn();
+    }
     final completer = Completer<T>();
     _executeCommand(
       command: command,
@@ -150,6 +156,9 @@ class XTBApiConnector {
     );
     return completer.future;
   }
+
+  Future<String?> awaitLoggedIn() =>
+      _currentSessionId$.firstWhere((sessionId) => sessionId != null);
 
   Cancellation _executeStreamCommand<T>({
     required String subscribeCommand,
@@ -169,23 +178,35 @@ class XTBApiConnector {
       }
     });
     final id = ++_outgoingRequestId;
+    final task =
+        _executeStreamCommandOnLogin(subscribeCommand, inlineArgs, channel);
     final cancellation = invokeOnce(() {
+      task.ignore();
       _streamCancellations.remove(id);
       channel.sink.close();
     });
     _streamCancellations[id] = cancellation;
 
-    JsonObj request = {
-      'streamSessionId': _currentSessionId,
-      'command': subscribeCommand,
-    };
-    if (inlineArgs != null) {
-      request.addAll(inlineArgs);
-    }
-    var encoded = jsonEncode(request);
-    logInfo('REQ [$subscribeCommand]: $encoded');
-    channel.sink.add(encoded);
     return cancellation;
+  }
+
+  Future<void> _executeStreamCommandOnLogin(
+    String subscribeCommand,
+    JsonObj? inlineArgs,
+    WebSocketChannel channel,
+  ) {
+    return awaitLoggedIn().then((sessionId) {
+      JsonObj request = {
+        'streamSessionId': sessionId,
+        'command': subscribeCommand,
+      };
+      if (inlineArgs != null) {
+        request.addAll(inlineArgs);
+      }
+      var encoded = jsonEncode(request);
+      logInfo('REQ [$subscribeCommand]: $encoded');
+      channel.sink.add(encoded);
+    });
   }
 
   Future<JsonObj> login(Credentials credentials) {
@@ -197,16 +218,18 @@ class XTBApiConnector {
         'password': credentials.password,
         'appName': appName,
       },
+      requiresAuth: false,
     ).then((value) {
-      _currentSessionId = value['streamSessionId'];
+      _currentSessionId$.add(value['streamSessionId']);
       return value;
     });
   }
 
   Future<List<SymbolData>> getAllSymbols() {
     return _executeFutureCommand(
-        command: 'getAllSymbols',
-        mapper: returnDataMapper(arrayDataMapper(SymbolData.fromMap)));
+      command: 'getAllSymbols',
+      mapper: returnDataMapper(arrayDataMapper(SymbolData.fromMap)),
+    );
   }
 
   Future<JsonObj> getCurrentUserData() {
