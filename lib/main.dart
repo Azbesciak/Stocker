@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:loggy/loggy.dart';
 import 'package:provider/provider.dart';
+import 'package:stocker/dev_credentials.dart';
 import 'package:stocker/preferences/preferences.dart';
 import 'package:stocker/preferences/shared_preferences.dart';
 import 'package:stocker/symbol/symbol_page.dart';
 import 'package:stocker/symbols_list/symbols_list_page.dart';
+import 'package:stocker/symbols_list/symbols_source.dart';
 import 'package:stocker/xtb/connector.dart';
 import 'package:stocker/xtb/json_helper.dart';
 
@@ -29,7 +31,13 @@ class StockerApp extends StatelessWidget {
             url: 'wss://ws.xtb.com/demo',
             streamUrl: 'wss://ws.xtb.com/demoStream',
             appName: 'test',
-          )..init(),
+          )
+            ..init()
+            ..login(devCredentials),
+          dispose: (ctx, value) => value.dispose(),
+        ),
+        Provider<SymbolsSource>(
+          create: (context) => SymbolsSource(context)..fetch(),
           dispose: (ctx, value) => value.dispose(),
         )
       ],
