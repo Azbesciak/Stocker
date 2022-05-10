@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:stocker/preferences/preferences.dart';
 import 'package:stocker/symbol/chart_period_selector.dart';
 import 'package:stocker/symbol/symbol_chart.dart';
@@ -19,7 +20,7 @@ class SymbolPage extends StatefulWidget {
 
 class _SymbolPageState extends State<SymbolPage> {
   late Preferences _preferences;
-  ChartPeriod _period = ChartPeriod.H1;
+  final BehaviorSubject<ChartPeriod> _period$ = BehaviorSubject();
   static const _SYMBOL_PERIOD_PREFERENCES_ROOT = 'symbol.period';
   static const _SYMBOL_PERIOD_RECENT = 'symbol.period.recent';
 
@@ -33,24 +34,19 @@ class _SymbolPageState extends State<SymbolPage> {
   void updatePeriodFromPreferences() async {
     String? period = await _preferences.get(_getPreferencesKey());
     if (period == null) {
-      period = await _preferences.get(_SYMBOL_PERIOD_RECENT);
+      period =
+          (await _preferences.get(_SYMBOL_PERIOD_RECENT)) ?? ChartPeriod.H1.tag;
     }
-    if (period != null && period != _period.tag) {
-      final recentPeriod = ChartPeriod.of(period)!;
-      _period = recentPeriod;
-      setState(() {
-        // to ensure update
-        _period = recentPeriod;
-      });
+    final chartPeriod = ChartPeriod.of(period);
+    if (chartPeriod != null) {
+      _period$.add(chartPeriod);
     }
   }
 
   _periodChanged(ChartPeriod period) {
     _preferences.save(_getPreferencesKey(), period.tag);
     _preferences.save(_SYMBOL_PERIOD_RECENT, period.tag);
-    setState(() {
-      _period = period;
-    });
+    _period$.add(period);
   }
 
   String _getPreferencesKey() =>
@@ -60,16 +56,26 @@ class _SymbolPageState extends State<SymbolPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: Stack(
-          children: [
-            Center(
-              child: SymbolChartWidget(symbol: widget.symbol, period: _period),
-            ),
-            ChartPeriodSelector(
-              periodChanged: (period) => _periodChanged(period),
-              initialPeriod: _period,
-            ),
-          ],
+        body: StreamBuilder<ChartPeriod>(
+          stream: _period$,
+          builder: (_, snap) {
+            if (!snap.hasData) return Container();
+            final period = snap.data!;
+            return Stack(
+              children: [
+                Center(
+                  child: SymbolChartWidget(
+                    symbol: widget.symbol,
+                    period: period,
+                  ),
+                ),
+                ChartPeriodSelector(
+                  periodChanged: (p) => _periodChanged(p),
+                  initialPeriod: period,
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
