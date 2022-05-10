@@ -27,12 +27,13 @@ class ChartPeriodItemView extends StatelessWidget {
           borderRadius: BorderRadius.circular(UIStyle.popupsBorderRadius),
           child: Padding(
             padding: const EdgeInsets.all(UIStyle.contentMarginMedium),
-            child: Text(period.tag,
-                style: TextStyle(
-                  color: selected
-                      ? colorScheme.onPrimary
-                      : colorScheme.onBackground,
-                )),
+            child: Text(
+              period.tag,
+              style: TextStyle(
+                color:
+                    selected ? colorScheme.onPrimary : colorScheme.onBackground,
+              ),
+            ),
           ),
           onTap: () => onClick(),
         ),
