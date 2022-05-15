@@ -21,10 +21,10 @@ class SymbolChartWidget extends StatefulWidget {
   final ChartPeriod period;
 
   const SymbolChartWidget({
-    Key? key,
+    super.key,
     required this.symbol,
     required this.period,
-  }) : super(key: key);
+  });
 
   @override
   State<SymbolChartWidget> createState() => _SymbolChartWidgetState();

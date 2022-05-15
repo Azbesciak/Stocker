@@ -8,10 +8,10 @@ class ChartPeriodSelector extends StatefulWidget {
   final ChartPeriod initialPeriod;
 
   const ChartPeriodSelector({
-    Key? key,
+    super.key,
     required this.initialPeriod,
     required this.periodChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<ChartPeriodSelector> createState() => _ChartPeriodSelectorState();

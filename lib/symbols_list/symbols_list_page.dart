@@ -7,7 +7,7 @@ import 'package:stocker/symbols_list/symbols_list.dart';
 class SymbolsListPage extends StatelessWidget {
   static const navRoute = '/';
 
-  const SymbolsListPage({Key? key}) : super(key: key);
+  const SymbolsListPage({super.key});
 
   @override
   Widget build(BuildContext context) {

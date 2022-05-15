@@ -6,8 +6,7 @@ import 'package:stocker/xtb/model/symbol_data.dart';
 class SymbolListItemWidget extends StatelessWidget {
   final SymbolData symbol;
 
-  const SymbolListItemWidget({Key? key, required this.symbol})
-      : super(key: key);
+  const SymbolListItemWidget({super.key, required this.symbol});
 
   @override
   Widget build(BuildContext context) {

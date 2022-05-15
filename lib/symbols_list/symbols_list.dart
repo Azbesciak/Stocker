@@ -8,7 +8,7 @@ import 'package:stocker/symbols_list/symbol_list_item.dart';
 import 'package:stocker/xtb/model/symbol_data.dart';
 
 class SymbolsList extends StatefulWidget {
-  const SymbolsList({Key? key}) : super(key: key);
+  const SymbolsList({super.key});
 
   @override
   State<SymbolsList> createState() => _SymbolsListState();

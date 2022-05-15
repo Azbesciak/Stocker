@@ -8,11 +8,11 @@ class ChartPeriodItemView extends StatelessWidget {
   final void Function() onClick;
 
   const ChartPeriodItemView({
-    Key? key,
+    super.key,
     required this.period,
     required this.selected,
     required this.onClick,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

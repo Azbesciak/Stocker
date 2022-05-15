@@ -12,7 +12,7 @@ class SymbolPage extends StatefulWidget {
 
   final SymbolData symbol;
 
-  const SymbolPage({Key? key, required this.symbol}) : super(key: key);
+  const SymbolPage({super.key, required this.symbol});
 
   @override
   State<SymbolPage> createState() => _SymbolPageState();

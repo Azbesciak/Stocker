@@ -5,9 +5,9 @@ class SymbolFilter extends StatelessWidget {
   final void Function(String v) onInputChange;
 
   const SymbolFilter({
-    Key? key,
+    super.key,
     required this.onInputChange,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
