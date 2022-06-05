@@ -18,17 +18,19 @@ class SymbolsListPage extends StatelessWidget {
         )
       ],
       builder: (BuildContext ctx, _) => Scaffold(
-        body: Center(
-          child: Stack(
-            children: [
-              SymbolsList(),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: SymbolFilter(
-                  onInputChange: (v) => _updateFilterValue(ctx, v),
-                ),
-              )
-            ],
+        body: SafeArea(
+          child: Center(
+            child: Stack(
+              children: [
+                SymbolsList(),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: SymbolFilter(
+                    onInputChange: (v) => _updateFilterValue(ctx, v),
+                  ),
+                )
+              ],
+            ),
           ),
         ),
       ),
