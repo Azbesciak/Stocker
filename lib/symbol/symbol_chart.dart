@@ -14,6 +14,7 @@ import 'package:stocker/xtb/model/chart_range_request.dart';
 import 'package:stocker/xtb/model/chart_request.dart';
 import 'package:stocker/xtb/model/error_data.dart';
 import 'package:stocker/xtb/model/symbol_data.dart';
+import 'package:stocker/xtb/model/ticks.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class SymbolChartWidget extends StatefulWidget {
@@ -45,6 +46,13 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   late GlobalKey<State> _globalKey;
   Cancellation? _ticksCancellation;
   late ChartDataPaddingManager _paddingManager;
+  List<CartesianChartAnnotation> _annotations = [];
+  List<PlotBand> _plotBands = [];
+
+  StreamController<TicksData> _ticksData$ = StreamController.broadcast();
+  StreamController<ActualRangeChangedArgs> _verticalAxis$ =
+      StreamController.broadcast();
+  StreamSubscription? _priceAnnotationsSub = null;
 
   @override
   void didUpdateWidget(covariant SymbolChartWidget oldWidget) {
@@ -90,20 +98,31 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     _globalKey = GlobalKey();
     _isLoadMoreView = false;
     _isNeedToUpdateView = false;
+    _priceAnnotationsSub = _updatePriceAnnotations();
     _fetchNewData();
     _updateRecentData();
+  }
+
+  StreamSubscription<Null> _updatePriceAnnotations() {
+    return CombineLatestStream([
+      _throttleStream(source: _ticksData$),
+      _throttleStream(source: _verticalAxis$),
+    ], (params) {
+      _updateLastPriceIndicator(
+          params[0] as TicksData, params[1] as ActualRangeChangedArgs);
+    }).listen((value) {});
   }
 
   void _updateRecentData() {
     final connector = Provider.of<XTBApiConnector>(context, listen: false);
     _ticksCancellation?.call();
     var canceled = false;
-    final source = StreamController<ChartData>.broadcast();
+    final candleSource = StreamController<ChartData>.broadcast();
 
     var period = widget.period;
     var symbol = widget.symbol.symbol;
     final streamListen =
-        _requestLastCandle(source, connector, period, symbol, canceled);
+        _requestLastCandle(candleSource, connector, period, symbol, canceled);
     Cancellation? ticksCancellation;
     final fut = _chartData.then((chartData) {
       if (canceled) {
@@ -117,7 +136,10 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
             logError('ERROR [$symbol]: $data');
             return;
           }
-          source.sink.add(chartData);
+          if (data.value != null) {
+            _ticksData$.sink.add(data.value!);
+          }
+          candleSource.sink.add(chartData);
         },
       );
     });
@@ -129,6 +151,76 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     });
   }
 
+  void _updateLastPriceIndicator(TicksData data, ActualRangeChangedArgs args) {
+    setState(() {
+      _plotBands.clear();
+      _plotBands.addAll([
+        plotBand(data.ask, Colors.green),
+        plotBand(data.bid, Colors.red),
+      ]);
+      _annotations.clear();
+      _annotations.addAll([
+        priceAnnotation(data.bid, Colors.red, Colors.white, args),
+        priceAnnotation(data.ask, Colors.green, Colors.white, args),
+      ]);
+    });
+  }
+
+  PlotBand plotBand(double price, Color color) {
+    return PlotBand(
+      start: price,
+      end: price,
+      borderWidth: 1,
+      borderColor: color,
+    );
+  }
+
+  CartesianChartAnnotation priceAnnotation(
+    double price,
+    Color color,
+    Color textColor,
+    ActualRangeChangedArgs args,
+  ) {
+    var priceDiff = args.actualMax - args.actualMin;
+    final height = _calculatePriceAnnotationPosition(price, args, priceDiff);
+
+    return CartesianChartAnnotation(
+      region: AnnotationRegion.plotArea,
+      coordinateUnit: CoordinateUnit.percentage,
+      x: '100%',
+      y: '${(1 - height) * 100}%',
+      horizontalAlignment: ChartAlignment.near,
+      widget: SizedBox(
+        height: 20,
+        width: 80,
+        child: CustomPaint(
+          painter: PriceTagPaint(color),
+          child: Center(
+            child: Text(
+              '${price}\$',
+              style: TextStyle(
+                fontSize: 11,
+                color: textColor,
+                decoration: TextDecoration.none,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  num _calculatePriceAnnotationPosition(
+      double price, ActualRangeChangedArgs args, priceDiff) {
+    return price < args.actualMin
+        ? 0
+        : price > args.actualMax
+            ? 1
+            : priceDiff > 0
+                ? (price - args.actualMin) / (priceDiff)
+                : 0.5;
+  }
+
   StreamSubscription<ChartData> _requestLastCandle(
     StreamController<ChartData> source,
     XTBApiConnector connector,
@@ -138,13 +230,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   ) {
     var requestId = 0;
     var recentReceivedId = requestId;
-    final streamListen = source.stream
-        .throttleTime(
-      const Duration(milliseconds: 500),
-      leading: true,
-      trailing: true,
-    )
-        .listen((chartData) {
+    final streamListen = _throttleStream(source: source).listen((chartData) {
       final myId = ++requestId;
       var start =
           (DateTime.now().millisecondsSinceEpoch / period.valueInMs).ceil() *
@@ -169,6 +255,16 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     });
     return streamListen;
   }
+
+  Stream<T> _throttleStream<T>({
+    required StreamController<T> source,
+    int duration = 500,
+  }) =>
+      source.stream.throttleTime(
+        Duration(milliseconds: duration),
+        leading: true,
+        trailing: true,
+      );
 
   void _updateChartData(ChartData newData, ChartData chartData) {
     final candle = newData.rateInfos.last;
@@ -238,6 +334,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       primaryXAxis: _defineXAxis(data),
       primaryYAxis: _defineYAxis(),
       series: <CandleSeries>[_initializeCandleSerie(data)],
+      annotations: _annotations,
     );
   }
 
@@ -251,6 +348,8 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       _oldAxisVisibleMin = args.visibleMin;
       _oldAxisVisibleMax = args.visibleMax;
       _isLoadMoreView = false;
+    } else {
+      _verticalAxis$.add(args);
     }
   }
 
@@ -261,6 +360,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       enableAutoIntervalOnZooming: true,
       anchorRangeToVisiblePoints: false,
       numberFormat: NumberFormat.decimalPattern(),
+      plotBands: _plotBands,
     );
   }
 
@@ -361,6 +461,36 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   void dispose() {
     _seriesController = null;
     _ticksCancellation?.call();
+    _priceAnnotationsSub?.cancel();
     super.dispose();
   }
+}
+
+class PriceTagPaint extends CustomPainter {
+  PriceTagPaint(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    Paint paint = Paint()
+      ..color = color
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.fill;
+
+    Path path = Path();
+
+    path
+      ..moveTo(0, size.height * .5)
+      ..lineTo(size.width * .13, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width, size.height)
+      ..lineTo(size.width * .13, size.height)
+      ..lineTo(0, size.height * .5)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
