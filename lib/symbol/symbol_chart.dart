@@ -35,6 +35,10 @@ class SymbolChartWidget extends StatefulWidget {
 class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   static const FETCH_PERIODS = 300;
   static const CHART_PADDING = 10;
+  static const ANNOTATION_HEIGHT = 20.0;
+  static const ANNOTATION_TEXT_SIZE = 12.0;
+  static const ANNOTATION_VERT_PADDING =
+      (ANNOTATION_HEIGHT - ANNOTATION_TEXT_SIZE) / 2;
   ChartSeriesController? _seriesController;
   late Future<ChartData> _chartData;
   late TrackballBehavior _trackballBehavior;
@@ -45,6 +49,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   int _currentPeriodOffset = 0;
   late GlobalKey<State> _globalKey;
   Cancellation? _ticksCancellation;
+  late NumberFormat _numberFormat;
   late ChartDataPaddingManager _paddingManager;
   List<CartesianChartAnnotation> _annotations = [];
   List<PlotBand> _plotBands = [];
@@ -60,6 +65,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     if (oldWidget.period != widget.period ||
         oldWidget.symbol != widget.symbol) {
       setState(() {
+        _numberFormat = _getNumberFormat();
         _chartData.ignore();
         _fetchNewData();
         _updateRecentData();
@@ -98,6 +104,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     _globalKey = GlobalKey();
     _isLoadMoreView = false;
     _isNeedToUpdateView = false;
+    _numberFormat = _getNumberFormat();
     _priceAnnotationsSub = _updatePriceAnnotations();
     _fetchNewData();
     _updateRecentData();
@@ -191,15 +198,16 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       y: '${(1 - height) * 100}%',
       horizontalAlignment: ChartAlignment.near,
       widget: SizedBox(
-        height: 20,
+        height: ANNOTATION_HEIGHT,
         width: 80,
         child: CustomPaint(
           painter: PriceTagPaint(color),
-          child: Center(
+          child: Padding(
+            padding: EdgeInsets.only(left: 10, top: ANNOTATION_VERT_PADDING),
             child: Text(
-              '${price}\$',
+              _numberFormat.format(price),
               style: TextStyle(
-                fontSize: 11,
+                fontSize: ANNOTATION_TEXT_SIZE,
                 color: textColor,
                 decoration: TextDecoration.none,
               ),
@@ -211,7 +219,10 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   }
 
   num _calculatePriceAnnotationPosition(
-      double price, ActualRangeChangedArgs args, priceDiff) {
+    double price,
+    ActualRangeChangedArgs args,
+    priceDiff,
+  ) {
     return price < args.actualMin
         ? 0
         : price > args.actualMax
@@ -331,7 +342,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       trackballBehavior: _trackballBehavior,
       crosshairBehavior: _crosshairBehavior,
       primaryXAxis: _defineXAxis(data.rateInfos),
-      primaryYAxis: _defineYAxis(data.digits),
+      primaryYAxis: _defineYAxis(),
       series: <CandleSeries>[_initializeCandleSerie(data.rateInfos)],
       annotations: _annotations,
     );
@@ -352,16 +363,19 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     }
   }
 
-  NumericAxis _defineYAxis(int digits) {
+  NumericAxis _defineYAxis() {
     return NumericAxis(
       opposedPosition: true,
       rangePadding: ChartRangePadding.additional,
       enableAutoIntervalOnZooming: true,
       anchorRangeToVisiblePoints: false,
-      numberFormat: NumberFormat('#,##0.' + '0' * digits),
+      numberFormat: _getNumberFormat(),
       plotBands: _plotBands,
     );
   }
+
+  NumberFormat _getNumberFormat() =>
+      NumberFormat('#,##0.' + '0' * widget.symbol.precision);
 
   ChartAxis _defineXAxis(List<CandleData> data) {
     return DateTimeCategoryAxis(
