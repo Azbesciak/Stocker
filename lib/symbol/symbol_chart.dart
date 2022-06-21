@@ -118,12 +118,14 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       _throttleStream(source: _verticalAxis$),
     ], (params) {
       _updateLastPriceIndicator(
-          params[0] as TicksData, params[1] as ActualRangeChangedArgs);
+        params[0] as TicksData,
+        params[1] as ActualRangeChangedArgs,
+      );
     }).listen((value) {});
   }
 
   void _updateRecentData() {
-    final connector = Provider.of<XTBApiConnector>(context, listen: false);
+    final connector = _provideApiConnector();
     _ticksCancellation?.call();
     var canceled = false;
     final candleSource = StreamController<ChartData>.broadcast();
@@ -159,6 +161,9 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       ticksCancellation?.call();
     });
   }
+
+  XTBApiConnector _provideApiConnector() =>
+      Provider.of<XTBApiConnector>(context, listen: false);
 
   void _updateLastPriceIndicator(TicksData data, ActualRangeChangedArgs args) {
     setState(() {
@@ -293,7 +298,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
   }
 
   Future<ChartData> _fetchData() {
-    final connector = Provider.of<XTBApiConnector>(context, listen: false);
+    final connector = _provideApiConnector();
     var currentPeriod = widget.period;
     var currentSymbol = widget.symbol.symbol;
     final end = DateTime.now().subtract(
