@@ -306,8 +306,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           _isLoadMoreView = true;
-          var data = snapshot.data!.rateInfos;
-          return _defineChart(data);
+          return _defineChart(snapshot.data!);
         } else if (snapshot.hasError) {
           logInfo(
             'CHART ERROR [${widget.symbol.symbol} ${widget.period.tag}] ${snapshot.error}',
@@ -324,16 +323,16 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     );
   }
 
-  SfCartesianChart _defineChart(List<CandleData> data) {
+  SfCartesianChart _defineChart(ChartData data) {
     return SfCartesianChart(
       // loadMoreIndicatorBuilder: _buildLoadMoreIndicatorView,
       onActualRangeChanged: _onActualRangeChanged,
       zoomPanBehavior: _zoomPanBehavior,
       trackballBehavior: _trackballBehavior,
       crosshairBehavior: _crosshairBehavior,
-      primaryXAxis: _defineXAxis(data),
-      primaryYAxis: _defineYAxis(),
-      series: <CandleSeries>[_initializeCandleSerie(data)],
+      primaryXAxis: _defineXAxis(data.rateInfos),
+      primaryYAxis: _defineYAxis(data.digits),
+      series: <CandleSeries>[_initializeCandleSerie(data.rateInfos)],
       annotations: _annotations,
     );
   }
@@ -353,13 +352,13 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     }
   }
 
-  NumericAxis _defineYAxis() {
+  NumericAxis _defineYAxis(int digits) {
     return NumericAxis(
       opposedPosition: true,
       rangePadding: ChartRangePadding.additional,
       enableAutoIntervalOnZooming: true,
       anchorRangeToVisiblePoints: false,
-      numberFormat: NumberFormat.decimalPattern(),
+      numberFormat: NumberFormat('#,##0.' + '0' * digits),
       plotBands: _plotBands,
     );
   }
