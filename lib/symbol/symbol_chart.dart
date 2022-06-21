@@ -65,7 +65,9 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     if (oldWidget.period != widget.period ||
         oldWidget.symbol != widget.symbol) {
       setState(() {
-        _numberFormat = _getNumberFormat();
+        if (oldWidget.symbol.precision != widget.symbol.precision) {
+          _numberFormat = _getNumberFormat();
+        }
         _chartData.ignore();
         _fetchNewData();
         _updateRecentData();
