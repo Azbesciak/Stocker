@@ -6,7 +6,7 @@ class TicksData {
   final double high;
   final int level;
   final double low;
-  final int quoteId;
+  final int? quoteId;
   final double spreadRaw;
   final double spreadTable;
   final String symbol;
@@ -53,7 +53,7 @@ class TicksData {
       high: map['high'] as double,
       level: map['level'] as int,
       low: map['low'] as double,
-      quoteId: map['quoteId'] as int,
+      quoteId: map['quoteId'] as int?,
       spreadRaw: map['spreadRaw'] as double,
       spreadTable: map['spreadTable'] as double,
       symbol: map['symbol'] as String,
