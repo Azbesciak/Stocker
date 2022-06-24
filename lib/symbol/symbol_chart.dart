@@ -107,9 +107,23 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     _isLoadMoreView = false;
     _isNeedToUpdateView = false;
     _numberFormat = _getNumberFormat();
+    _initializeAskBid();
     _priceAnnotationsSub = _updatePriceAnnotations();
     _fetchNewData();
     _updateRecentData();
+  }
+
+  Future<dynamic> _initializeAskBid() {
+    return _ticksData$.addStream(
+      _provideApiConnector()
+          .getTickPrices(
+            symbols: [widget.symbol.symbol],
+            referenceTimestamp: widget.symbol.time,
+          )
+          .asStream()
+          .onErrorReturn([])
+          .mapNotNull((p0) => p0.isNotEmpty ? p0.first : null),
+    );
   }
 
   StreamSubscription<Null> _updatePriceAnnotations() {

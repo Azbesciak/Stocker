@@ -316,4 +316,22 @@ class XTBApiConnector {
       mapper: TicksData.fromMap,
     );
   }
+
+  Future<List<TicksData>> getTickPrices({
+    required List<String> symbols,
+    required int referenceTimestamp,
+    int level = 0,
+  }) {
+    return _executeFutureCommand(
+      command: 'getTickPrices',
+      mapper: returnDataMapper(
+        (o) => arrayDataMapper(TicksData.fromMap)((o as JsonObj)['quotations']),
+      ),
+      arguments: {
+        'level': level,
+        'symbols': symbols,
+        'timestamp': referenceTimestamp,
+      },
+    );
+  }
 }
