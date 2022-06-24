@@ -305,12 +305,13 @@ class XTBApiConnector {
 
   Cancellation getTickPrices$({
     required String symbol,
+    int maxLevel: 0,
     required Callback<Result<TicksData>> onResult,
   }) {
     return _executeStreamCommand(
       subscribeCommand: 'getTickPrices',
       unsubscribeCommand: 'stopTickPrices',
-      inlineArgs: {'symbol': symbol},
+      inlineArgs: {'symbol': symbol, 'maxLevel': maxLevel},
       onResult: onResult,
       mapper: TicksData.fromMap,
     );
