@@ -280,7 +280,7 @@ class XTBApiConnector {
     );
   }
 
-  Cancellation getCandles({
+  Cancellation getCandles$({
     required String symbol,
     required Callback<Result<CandleData>> onResult,
   }) {
@@ -292,7 +292,7 @@ class XTBApiConnector {
     );
   }
 
-  Cancellation getNews({
+  Cancellation getNews$({
     required Callback<Result<NewsData>> onResult,
   }) {
     return _executeStreamCommand(
@@ -303,7 +303,7 @@ class XTBApiConnector {
     );
   }
 
-  Cancellation getTickPrices({
+  Cancellation getTickPrices$({
     required String symbol,
     required Callback<Result<TicksData>> onResult,
   }) {

@@ -140,7 +140,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
         return;
       }
 
-      ticksCancellation = connector.getTickPrices(
+      ticksCancellation = connector.getTickPrices$(
         symbol: symbol,
         onResult: (data) {
           if (!data.isSuccess()) {
