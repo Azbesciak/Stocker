@@ -1,22 +1,34 @@
-import 'package:stocker/preferences/preferences.dart';
+import 'package:stocker/preferences/watchable_preferences.dart';
 
 class FavouritesStore {
-  final Preferences preferences;
+  final WatchablePreferences preferences;
   static const _FAVOURITES_SYMBOLS_ROOT = 'favourites.symbols';
   static const _SYMBOLS_SEPARATOR = ',';
 
   FavouritesStore({required this.preferences});
 
-  Future<List<String>> getFavourites(String group) {
-    final keyForGroup = _keyForGroup(group);
-    return preferences.get(keyForGroup).then((value) {
-      final asStr = (value as String? ?? '');
-      return asStr.isEmpty ? [] : asStr.split(_SYMBOLS_SEPARATOR);
-    });
+  Stream<List<String>> watchGroup$(String group) {
+    return preferences
+        .watch$<String>(_keyForGroup(group))
+        .map(_extractValuesToList);
   }
 
-  Future<bool> addToFavourites(String symbol, String group,
-      [int position = 0]) {
+  Future<List<String>> getFavourites(String group) {
+    return preferences
+        .get<String>(_keyForGroup(group))
+        .then(_extractValuesToList);
+  }
+
+  List<String> _extractValuesToList(String? value) {
+    final asStr = value ?? '';
+    return asStr.isEmpty ? [] : asStr.split(_SYMBOLS_SEPARATOR);
+  }
+
+  Future<bool> addToFavourites(
+    String symbol,
+    String group, [
+    int position = 0,
+  ]) {
     return _updateGroup(
       symbol,
       group,

@@ -1,4 +1,5 @@
 import 'package:stocker/favourites/favourites_store.dart';
+import 'package:stocker/preferences/watchable_preferences.dart';
 import 'package:test/test.dart';
 
 import '../mock-preferences.dart';
@@ -100,10 +101,30 @@ void main() {
       });
     });
   });
+
+  test('updates are watchable', () async {
+    final store = _getStore();
+    final group = 'aaqwe';
+    final stream = store.watchGroup$(group);
+    final element = ['A', 'B', 'C', 'D'];
+    final watched = <List<String>>[];
+    stream.listen(watched.add);
+    for (var e in element) {
+      await store.addToFavourites(e, group);
+    }
+    await Future.delayed(Duration(seconds: 1));
+    expect(
+      watched.length,
+      element.length + 1,
+      reason: 'expect history long as changes + 1 (initial empty state)',
+    );
+  });
 }
 
 Future<FavouritesStore> _initializeStoreWithItems(
-    List<String> element, String group) async {
+  List<String> element,
+  String group,
+) async {
   final store = _getStore();
   for (var e in element) {
     await store.addToFavourites(e, group);
@@ -111,4 +132,5 @@ Future<FavouritesStore> _initializeStoreWithItems(
   return store;
 }
 
-FavouritesStore _getStore() => FavouritesStore(preferences: MockPreferences());
+FavouritesStore _getStore() =>
+    FavouritesStore(preferences: WatchablePreferences(MockPreferences()));
