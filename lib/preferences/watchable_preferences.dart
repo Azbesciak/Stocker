@@ -4,17 +4,37 @@ import 'dart:collection';
 import 'package:rxdart/rxdart.dart';
 import 'package:stocker/preferences/preferences.dart';
 
+class _StreamContainer<T> {
+  late final BehaviorSubject<Stream<T?>> _input;
+  late final Stream<T?> output;
+
+  _StreamContainer(Future<T?> seed) {
+    _input = BehaviorSubject.seeded(seed.asStream());
+    output = _input
+        .switchMap(
+          (v) => v.asBroadcastStream(),
+        )
+        .asBroadcastStream();
+  }
+
+  add(T? value) {
+    _input.add(Stream.value(value));
+  }
+}
+
 class WatchablePreferences extends Preferences {
   final Preferences _delegate;
-  final Map<String, BehaviorSubject<dynamic>> _watched = HashMap();
+  final Map<String, _StreamContainer<dynamic>> _watched = HashMap();
 
   WatchablePreferences(this._delegate);
 
   Stream<T?> watch$<T>(String key) {
-    return _watched.putIfAbsent(
-      key,
-      () => BehaviorSubject()..addStream(get(key).asStream()),
-    ) as Stream<T?>;
+    return _watched
+        .putIfAbsent(
+          key,
+          () => _StreamContainer<T>(get<T>(key)),
+        )
+        .output as Stream<T?>;
   }
 
   @override
@@ -24,9 +44,9 @@ class WatchablePreferences extends Preferences {
 
   @override
   Future<bool> save(String key, value) {
-    return _delegate.save(key, value).then((value) {
+    return _delegate.save(key, value).then((result) {
       _watched[key]?.add(value);
-      return value;
+      return result;
     });
   }
 }

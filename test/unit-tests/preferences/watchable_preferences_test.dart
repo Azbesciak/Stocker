@@ -21,7 +21,7 @@ void main() {
     final savedValue = '1';
     await preferences.save(key, savedValue);
     final saved = await preferences
-        .watch$(key)
+        .watch$<String>(key)
         .timeout(
           Duration(seconds: 1),
           onTimeout: (s) => s.close(),
@@ -29,6 +29,24 @@ void main() {
         .toList();
     expect(saved.length, 1, reason: 'should contain exactly one value');
     expect(saved[0], savedValue, reason: 'should save exactly given value');
+  });
+
+  test('if value was written earlier, it should be returned on watch',
+      () async {
+    final preferences = _preferences();
+    final key = 'ala';
+    final savedValue = '1';
+    final saved = [];
+    final stream = preferences.watch$<String>(key);
+    stream.listen(saved.add);
+    await stream.first;
+    await preferences.save(key, savedValue);
+    await stream.first;
+    expect(
+      saved,
+      [null, savedValue],
+      reason: 'should contain initial value and after write',
+    );
   });
 }
 
