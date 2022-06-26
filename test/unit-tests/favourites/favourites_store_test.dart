@@ -112,14 +112,76 @@ void main() {
     for (var e in element) {
       await store.addToFavourites(e, group);
     }
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(_SYNC_DURATION);
     expect(
       watched.length,
       element.length + 1,
       reason: 'expect history long as changes + 1 (initial empty state)',
     );
   });
+
+  test('can add on the end with -1', () async {
+    final group = 'aaqwe';
+    final store = await _initializeStoreWithItems(['1', '2', '3'], group);
+    await store.addToFavourites('10', group, -1);
+    final actual = await store.getFavourites(group);
+    await Future.delayed(_SYNC_DURATION);
+    expect(
+      actual,
+      ['3', '2', '1', '10'],
+      reason: 'when last expected, it should be added on the end',
+    );
+  });
+
+  test('should move already stored item to the end if required', () async {
+    final group = 'aaqwe';
+    final store = await _initializeStoreWithItems(['1', '2', '3'], group);
+    await store.addToFavourites('3', group, -1);
+    final actual = await store.getFavourites(group);
+    await Future.delayed(_SYNC_DURATION);
+    expect(
+      actual,
+      ['2', '1', '3'],
+      reason: 'when last expected, it should be added on the end',
+    );
+  });
+
+  test('should clean group after removing', () async {
+    final group = 'aaqwe';
+    final store = await _initializeStoreWithItems(['1', '2', '3'], group);
+    final groupsBeforeGroupAdd = await store.getGroups();
+    expect(
+      groupsBeforeGroupAdd,
+      [],
+      reason: 'group need to be added manually',
+    );
+    await store.addGroup(group);
+    final groupsAfterGroupAdd = await store.getGroups();
+    expect(
+      groupsAfterGroupAdd,
+      [group],
+      reason: 'group should be added',
+    );
+    final storedInGroup = await store.getFavourites(group);
+    expect(storedInGroup, ['3', '2', '1'],
+        reason: 'items should be added to group');
+    await store.removeGroup(group);
+    final afterRemove = await store.getFavourites(group);
+    expect(
+      afterRemove,
+      [],
+      reason: 'group after remove should be empty',
+    );
+    final groupsAfterRemove = await store.getGroups();
+    expect(
+      groupsAfterRemove,
+      [],
+      reason: 'there should be no groups after remove',
+    );
+  });
 }
+
+final _SYNC_DURATION = Duration(milliseconds: 100);
 
 Future<FavouritesStore> _initializeStoreWithItems(
   List<String> element,

@@ -3,9 +3,36 @@ import 'package:stocker/preferences/watchable_preferences.dart';
 class FavouritesStore {
   final WatchablePreferences preferences;
   static const _FAVOURITES_SYMBOLS_ROOT = 'favourites.symbols';
+  static const _FAVOURITES_GROUPS = 'favourites.groups';
   static const _SYMBOLS_SEPARATOR = ',';
 
   FavouritesStore({required this.preferences});
+
+  Future<List<String>> getGroups() {
+    return preferences
+        .get<String>(_FAVOURITES_GROUPS)
+        .then(_extractValuesToList);
+  }
+
+  Stream<List<String>> watchGroups$() {
+    return preferences
+        .watch$<String>(_FAVOURITES_GROUPS)
+        .map(_extractValuesToList);
+  }
+
+  Future<bool> addGroup(String groupName, [int position = -1]) {
+    return getGroups().then((g) => _addValue(g, groupName, _FAVOURITES_GROUPS));
+  }
+
+  Future<bool> removeGroup(String groupName) {
+    return getGroups()
+        .then((g) => _removeValue(g, groupName, _FAVOURITES_GROUPS))
+        .then(
+          (removed) => preferences
+              .save(_keyForGroup(groupName), null)
+              .then((value) => removed),
+        );
+  }
 
   Stream<List<String>> watchGroup$(String group) {
     return preferences
@@ -32,12 +59,12 @@ class FavouritesStore {
     return _updateGroup(
       symbol,
       group,
-      (c, s, g) => _addSymbolToGroup(c, s, g, position),
+      (c, s, g) => _addValue(c, s, g, position),
     );
   }
 
   Future<bool> removeFromFavourites(String symbol, String group) {
-    return _updateGroup(symbol, group, _removeSymbolFromGroup);
+    return _updateGroup(symbol, group, _removeValue);
   }
 
   Future<bool> _updateGroup(
@@ -53,33 +80,40 @@ class FavouritesStore {
         .then((value) => update(value, symbol, _keyForGroup(group)));
   }
 
-  Future<bool> _addSymbolToGroup(
+  Future<bool> _addValue(
     List<String> currentValue,
-    String symbol,
-    String keyForGroup, [
+    String value,
+    String key, [
     int position = 0,
   ]) {
-    final currentIndex = currentValue.indexOf(symbol);
+    final currentIndex = currentValue.indexOf(value);
+    if (position == -1) {
+      if (currentIndex == -1) {
+        position = currentValue.length;
+      } else {
+        position = currentValue.length - 1;
+      }
+    }
     if (currentIndex == position) {
       return Future.value(false);
     }
     if (currentIndex != -1) {
-      currentValue.remove(symbol);
+      currentValue.remove(value);
     }
-    currentValue.insert(position, symbol);
-    return preferences.save(keyForGroup, currentValue.join(_SYMBOLS_SEPARATOR));
+    currentValue.insert(position, value);
+    return preferences.save(key, currentValue.join(_SYMBOLS_SEPARATOR));
   }
 
-  Future<bool> _removeSymbolFromGroup(
+  Future<bool> _removeValue(
     List<String> currentValue,
-    String symbol,
-    String keyForGroup,
+    String value,
+    String key,
   ) {
-    if (currentValue.isEmpty || !currentValue.contains(symbol)) {
+    if (currentValue.isEmpty || !currentValue.contains(value)) {
       return Future.value(false);
     }
-    final newValue = (currentValue..remove(symbol)).join(_SYMBOLS_SEPARATOR);
-    return preferences.save(keyForGroup, newValue);
+    final newValue = (currentValue..remove(value)).join(_SYMBOLS_SEPARATOR);
+    return preferences.save(key, newValue);
   }
 
   String _keyForGroup(String group) => _FAVOURITES_SYMBOLS_ROOT + '.' + group;
