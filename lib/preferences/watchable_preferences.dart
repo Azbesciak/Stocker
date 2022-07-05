@@ -9,12 +9,16 @@ class _StreamContainer<T> {
   late final Stream<T?> output;
 
   _StreamContainer(Future<T?> seed) {
-    _input = BehaviorSubject.seeded(seed.asStream());
+    _input = BehaviorSubject<Stream<T?>>.seeded(seed.asStream());
     output = _input
         .switchMap(
           (v) => v.asBroadcastStream(),
         )
-        .asBroadcastStream();
+        .asBroadcastStream()
+        .shareValue();
+    // very nice memory leak but in rxdart behavior subject works different than in rxjs -
+    // after the last subscription is canceled, any later added do not receive value there.
+    output.listen((event) {});
   }
 
   add(T? value) {
