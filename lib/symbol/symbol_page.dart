@@ -9,6 +9,13 @@ import 'package:stocker/xtb/model/symbol_data.dart';
 
 class SymbolPage extends StatefulWidget {
   static const navRoute = '/symbol';
+  static goTo(BuildContext context, SymbolData symbol) {
+    Navigator.pushNamed(
+      context,
+      SymbolPage.navRoute,
+      arguments: {'symbol': symbol},
+    );
+  }
 
   final SymbolData symbol;
 

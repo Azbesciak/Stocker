@@ -13,13 +13,7 @@ class SymbolListItemWidget extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: Text(symbol.symbol),
-        onTap: () {
-          Navigator.pushNamed(
-            context,
-            SymbolPage.navRoute,
-            arguments: {'symbol': symbol},
-          );
-        },
+        onTap: () => SymbolPage.goTo(context, symbol),
         title: Text(symbol.description),
       ),
     );
