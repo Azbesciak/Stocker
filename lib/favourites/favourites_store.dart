@@ -1,7 +1,9 @@
+import 'package:loggy/loggy.dart';
 import 'package:stocker/preferences/watchable_preferences.dart';
 
 class FavouritesStore {
   final WatchablePreferences preferences;
+  static const DEFAULT_GROUP = 'Default';
   static const _FAVOURITES_SYMBOLS_ROOT = 'favourites.symbols';
   static const _FAVOURITES_GROUPS = 'favourites.groups';
   static const _SYMBOLS_SEPARATOR = ',';
@@ -113,6 +115,7 @@ class FavouritesStore {
       return Future.value(false);
     }
     final newValue = (currentValue..remove(value)).join(_SYMBOLS_SEPARATOR);
+    logInfo('removed $value $newValue');
     return preferences.save(key, newValue);
   }
 

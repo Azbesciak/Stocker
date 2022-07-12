@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:stocker/favourites/favourites_store.dart';
 import 'package:stocker/symbols_list/filter_data.dart';
 import 'package:stocker/symbols_list/filtered_symbols_source.dart';
 import 'package:stocker/symbols_list/symbol_list_item.dart';
@@ -16,9 +19,32 @@ class SymbolsList extends StatefulWidget {
 
 class _SymbolsListState extends State<SymbolsList> {
   final Map<String, bool> _expansions = HashMap();
+  late final Stream<Set<String>> _allFavourites$;
+  late final StreamSubscription<Set<String>> _behaviorSub;
+
+  @override
+  void initState() {
+    super.initState();
+    final favourites = Provider.of<FavouritesStore>(context, listen: false);
+    _allFavourites$ = favourites
+        .watchGroups$()
+        .switchMap(
+          (groups) => CombineLatestStream(
+            groups.map((e) => favourites.watchGroup$(e).share()),
+            (values) => values.expand((v) => v as List<String>).toSet(),
+          ),
+        )
+        .debounceTime(
+          Duration(milliseconds: 10),
+        )
+        .shareValue();
+    _behaviorSub = _allFavourites$.listen((event) {});
+  }
 
   @override
   Widget build(BuildContext context) {
+    final favourites = Provider.of<FavouritesStore>(context, listen: false);
+
     return StreamBuilder<FilteredData?>(
       stream:
           Provider.of<FilteredSymbolsSource>(context, listen: false).filtered$,
@@ -30,9 +56,8 @@ class _SymbolsListState extends State<SymbolsList> {
             BuildContext context,
             int index,
             List<SymbolData> items,
-          ) {
-            return SymbolListItemWidget(symbol: items[index]);
-          }
+          ) =>
+              _buildSymbolListItem(items, index, favourites);
 
           Widget _headerBuilder(
             BuildContext context,
@@ -93,5 +118,45 @@ class _SymbolsListState extends State<SymbolsList> {
         );
       },
     );
+  }
+
+  StreamBuilder<bool> _buildSymbolListItem(
+      List<SymbolData> items, int index, FavouritesStore favourites) {
+    final symbol = items[index];
+    return StreamBuilder<bool>(
+      builder: (ctx, snap) {
+        final isFavourite = snap.hasData && snap.data!;
+        return SymbolListItemWidget(
+          symbol: symbol,
+          isFavourite: isFavourite,
+          toggleFavourite: () =>
+              _toggleFavouriteState(isFavourite, favourites, symbol),
+        );
+      },
+      stream: _allFavourites$
+          .map((event) => event.contains(symbol.symbol))
+          .distinct(),
+    );
+  }
+
+  void _toggleFavouriteState(
+      bool isFavourite, FavouritesStore favourites, SymbolData symbol) {
+    if (isFavourite) {
+      favourites.removeFromFavourites(
+        symbol.symbol,
+        FavouritesStore.DEFAULT_GROUP,
+      );
+    } else {
+      favourites.addToFavourites(
+        symbol.symbol,
+        FavouritesStore.DEFAULT_GROUP,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _behaviorSub.cancel();
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:loggy/loggy.dart';
 import 'package:provider/provider.dart';
 import 'package:stocker/dev_credentials.dart';
+import 'package:stocker/favourites/favourites_page.dart';
+import 'package:stocker/favourites/favourites_store.dart';
 import 'package:stocker/preferences/preferences.dart';
 import 'package:stocker/preferences/shared_preferences.dart';
 import 'package:stocker/preferences/watchable_preferences.dart';
@@ -30,6 +32,12 @@ class StockerApp extends StatelessWidget {
         Provider<Preferences>(
           create: (context) =>
               Provider.of<WatchablePreferences>(context, listen: false),
+        ),
+        Provider<FavouritesStore>(
+          create: (context) => FavouritesStore(
+            preferences:
+                Provider.of<WatchablePreferences>(context, listen: false),
+          ),
         ),
         Provider<XTBApiConnector>(
           create: (context) => XTBApiConnector(
@@ -61,10 +69,11 @@ class StockerApp extends StatelessWidget {
             brightness: Brightness.light,
           ),
         ),
-        initialRoute: SymbolsListPage.navRoute,
+        initialRoute: FavouritesPage.navRoute,
         onGenerateRoute: (RouteSettings settings) {
           Map<String, WidgetBuilder> routes = {
-            // LandingPage.navRoute: (BuildContext context) => LandingPage(),
+            '/': (context) => FavouritesPage(),
+            FavouritesPage.navRoute: (context) => FavouritesPage(),
             SymbolsListPage.navRoute: (BuildContext context) =>
                 SymbolsListPage(),
             SymbolPage.navRoute: (BuildContext context) {

@@ -5,7 +5,7 @@ import 'package:stocker/symbols_list/symbol_filter.dart';
 import 'package:stocker/symbols_list/symbols_list.dart';
 
 class SymbolsListPage extends StatelessWidget {
-  static const navRoute = '/';
+  static const navRoute = '/symbols';
 
   const SymbolsListPage({super.key});
 
