@@ -232,6 +232,14 @@ class XTBApiConnector {
     );
   }
 
+  Future<SymbolData> getSymbol({required String symbol}) {
+    return _executeFutureCommand(
+      command: 'getSymbol',
+      arguments: {'symbol': symbol},
+      mapper: returnDataMapper(SymbolData.fromMap),
+    );
+  }
+
   Future<JsonObj> getCurrentUserData() {
     return _executeFutureCommand(
       command: 'getCurrentUserData',
