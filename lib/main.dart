@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:stocker/dev_credentials.dart';
 import 'package:stocker/preferences/preferences.dart';
 import 'package:stocker/preferences/shared_preferences.dart';
+import 'package:stocker/preferences/watchable_preferences.dart';
 import 'package:stocker/symbol/symbol_page.dart';
 import 'package:stocker/symbols_list/symbols_list_page.dart';
 import 'package:stocker/symbols_list/symbols_source.dart';
@@ -23,8 +24,12 @@ class StockerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<WatchablePreferences>(
+          create: (context) => WatchablePreferences(SharedPreferences()),
+        ),
         Provider<Preferences>(
-          create: (context) => SharedPreferences(),
+          create: (context) =>
+              Provider.of<WatchablePreferences>(context, listen: false),
         ),
         Provider<XTBApiConnector>(
           create: (context) => XTBApiConnector(
