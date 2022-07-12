@@ -6,6 +6,7 @@ import 'package:loggy/loggy.dart';
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:stocker/symbol/chart_data_padding_manager.dart';
+import 'package:stocker/utils.dart';
 import 'package:stocker/xtb/connector.dart';
 import 'package:stocker/xtb/model/candle_data.dart';
 import 'package:stocker/xtb/model/chart_data.dart';
@@ -395,8 +396,7 @@ class _SymbolChartWidgetState extends State<SymbolChartWidget> {
     );
   }
 
-  NumberFormat _getNumberFormat() =>
-      NumberFormat('#,##0.' + '0' * widget.symbol.precision);
+  NumberFormat _getNumberFormat() => getPriceFormat(widget.symbol.precision);
 
   ChartAxis _defineXAxis(List<CandleData> data) {
     return DateTimeCategoryAxis(
