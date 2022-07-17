@@ -75,13 +75,18 @@ class _ChartPeriodSelectorState extends State<ChartPeriodSelector> {
 
   Widget _buildList() {
     if (_extended) {
-      return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        ...PERIODS.map((period) => ChartPeriodItemView(
+      return Wrap(
+        direction: Axis.horizontal,
+        children: [
+          ...PERIODS.map(
+            (period) => ChartPeriodItemView(
               period: period,
               selected: period == _selected,
               onClick: () => _updateSelection(period),
-            ))
-      ]);
+            ),
+          )
+        ],
+      );
     } else {
       return ChartPeriodItemView(
         period: _selected,
