@@ -25,13 +25,16 @@ class ChartPeriodItemView extends StatelessWidget {
         elevation: 2,
         child: InkWell(
           borderRadius: BorderRadius.circular(UIStyle.popupsBorderRadius),
-          child: Padding(
-            padding: const EdgeInsets.all(UIStyle.contentMarginMedium),
-            child: Text(
-              period.tag,
-              style: TextStyle(
-                color:
-                    selected ? colorScheme.onPrimary : colorScheme.onBackground,
+          child: SizedBox(
+            width: 40,
+            height: 30,
+            child: Align(
+              child: Text(
+                period.tag,
+                style: TextStyle(
+                  color:
+                      selected ? colorScheme.onPrimary : colorScheme.onBackground,
+                ),
               ),
             ),
           ),
