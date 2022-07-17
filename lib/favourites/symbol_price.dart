@@ -5,6 +5,8 @@ import 'package:stocker/xtb/model/symbol_data.dart';
 
 const _BOX_SIZE = 100.0;
 const _PADDING_SIZE = 20.0;
+const _MAIN_TEXT_SIZE = 15.0;
+const _MINOR_TEXT_SIZE = 10.0;
 
 class SymbolPriceWidget extends StatelessWidget {
   final SymbolData symbol;
@@ -14,25 +16,76 @@ class SymbolPriceWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final format = getPriceFormat(symbol.precision);
+    final subcolor = Theme.of(context).textTheme.caption?.color;
     return Container(
-      width: _BOX_SIZE * 2 + _PADDING_SIZE,
+      width: 2 * _BOX_SIZE + _PADDING_SIZE,
+      alignment: Alignment.center,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          getPriceBox(symbol.bid, format),
-          getPriceBox(symbol.ask, format),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              getPriceBox(
+                value: symbol.bid,
+                format: format,
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: _MAIN_TEXT_SIZE,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              getPriceBox(
+                value: symbol.low,
+                format: format,
+                style: TextStyle(
+                  fontSize: _MINOR_TEXT_SIZE,
+                  color: subcolor,
+                ),
+                prefix: 'Min: ',
+              ),
+            ],
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              getPriceBox(
+                value: symbol.ask,
+                format: format,
+                style: TextStyle(
+                  color: Colors.green,
+                  fontSize: _MAIN_TEXT_SIZE,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              getPriceBox(
+                value: symbol.high,
+                format: format,
+                style: TextStyle(
+                  fontSize: _MINOR_TEXT_SIZE,
+                  color: subcolor,
+                ),
+                prefix: 'Min: ',
+              ),
+            ],
+          ),
         ],
       ),
     );
-    return Container();
   }
 
-  SizedBox getPriceBox(double value, NumberFormat format) {
+  SizedBox getPriceBox({
+    required double value,
+    required NumberFormat format,
+    required TextStyle style,
+    String? prefix,
+  }) {
+    var formattedValue = format.format(value);
     return SizedBox(
       width: _BOX_SIZE,
       child: Text(
-        format.format(value),
+        prefix == null ? formattedValue : '${prefix}${formattedValue}',
         textAlign: TextAlign.center,
+        style: style,
       ),
     );
   }

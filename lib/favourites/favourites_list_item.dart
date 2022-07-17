@@ -19,18 +19,20 @@ class FavouritesListItemWidget extends StatelessWidget {
     return FutureBuilder<SymbolData>(
       future: connector.getSymbol(symbol: symbol),
       builder: (ctx, sna) {
-        return ListTile(
-          title: Text(symbol),
-          trailing: !sna.hasData && !sna.hasError
-              ? CircularProgressIndicator()
-              : sna.hasData
-                  ? SymbolPriceWidget(symbol: sna.data!)
-                  : Text('error: ${sna.error}'),
-          onTap: () {
-            if (sna.hasData) {
-              SymbolPage.goTo(context, sna.data!);
-            }
-          },
+        return SizedBox(
+          child: ListTile(
+            title: Text(symbol),
+            trailing: !sna.hasData && !sna.hasError
+                ? CircularProgressIndicator()
+                : sna.hasData
+                    ? SymbolPriceWidget(symbol: sna.data!)
+                    : Text('error: ${sna.error}'),
+            onTap: () {
+              if (sna.hasData) {
+                SymbolPage.goTo(context, sna.data!);
+              }
+            },
+          ),
         );
       },
     );
