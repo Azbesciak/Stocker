@@ -1,4 +1,5 @@
 import 'package:loggy/loggy.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:stocker/preferences/watchable_preferences.dart';
 
 class FavouritesStore {
@@ -120,4 +121,23 @@ class FavouritesStore {
   }
 
   String _keyForGroup(String group) => _FAVOURITES_SYMBOLS_ROOT + '.' + group;
+
+  Stream<T> watchAllFavourites<T>({
+    required T aggregator(List<List<String>> values, List<String> groups),
+  }) {
+    return watchGroups$()
+        .switchMap(
+          (groups) => CombineLatestStream(
+            groups.map((e) => watchGroup$(e).share()),
+            (values) => aggregator(values as List<List<String>>, groups),
+          ),
+        )
+        .debounceTime(
+          Duration(milliseconds: 10),
+        )
+        .shareValue();
+  }
 }
+
+Set<String> collectToSet(List<List<String>> items, List<String> groups) =>
+    items.expand((e) => e).toSet();

@@ -3,7 +3,6 @@ import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rxdart/rxdart.dart';
 import 'package:stocker/favourites/favourites_store.dart';
 import 'package:stocker/symbols_list/filter_data.dart';
 import 'package:stocker/symbols_list/filtered_symbols_source.dart';
@@ -26,18 +25,7 @@ class _SymbolsListState extends State<SymbolsList> {
   void initState() {
     super.initState();
     final favourites = Provider.of<FavouritesStore>(context, listen: false);
-    _allFavourites$ = favourites
-        .watchGroups$()
-        .switchMap(
-          (groups) => CombineLatestStream(
-            groups.map((e) => favourites.watchGroup$(e).share()),
-            (values) => values.expand((v) => v as List<String>).toSet(),
-          ),
-        )
-        .debounceTime(
-          Duration(milliseconds: 10),
-        )
-        .shareValue();
+    _allFavourites$ = favourites.watchAllFavourites(aggregator: collectToSet);
     _behaviorSub = _allFavourites$.listen((event) {});
   }
 
