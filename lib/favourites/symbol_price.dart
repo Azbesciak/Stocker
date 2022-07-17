@@ -16,7 +16,7 @@ class SymbolPriceWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final format = getPriceFormat(symbol.precision);
-    final subcolor = Theme.of(context).textTheme.caption?.color;
+    final subColor = Theme.of(context).textTheme.caption?.color;
     return Container(
       width: 2 * _BOX_SIZE + _PADDING_SIZE,
       alignment: Alignment.center,
@@ -39,7 +39,7 @@ class SymbolPriceWidget extends StatelessWidget {
                 format: format,
                 style: TextStyle(
                   fontSize: _MINOR_TEXT_SIZE,
-                  color: subcolor,
+                  color: subColor,
                 ),
                 prefix: 'Min: ',
               ),
@@ -62,7 +62,7 @@ class SymbolPriceWidget extends StatelessWidget {
                 format: format,
                 style: TextStyle(
                   fontSize: _MINOR_TEXT_SIZE,
-                  color: subcolor,
+                  color: subColor,
                 ),
                 prefix: 'Min: ',
               ),
