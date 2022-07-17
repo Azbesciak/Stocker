@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stocker/favourites/favourites_button.dart';
 import 'package:stocker/symbol/symbol_page.dart';
 import 'package:stocker/xtb/model/symbol_data.dart';
 
@@ -21,14 +22,9 @@ class SymbolListItemWidget extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: Text(symbol.symbol),
-        trailing: IconButton(
-          icon: isFavourite
-              ? Icon(
-                  Icons.done,
-                  color: Colors.green,
-                )
-              : Icon(Icons.add_circle_outline),
-          onPressed: toggleFavourite,
+        trailing: FavouritesButton(
+          isFavourite: isFavourite,
+          toggleFavourite: toggleFavourite,
         ),
         onTap: () => SymbolPage.goTo(context, symbol),
         title: Text(symbol.description),
