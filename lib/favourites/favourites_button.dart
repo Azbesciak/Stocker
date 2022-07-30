@@ -15,10 +15,10 @@ class FavouritesButton extends StatelessWidget {
     return IconButton(
       icon: isFavourite
           ? Icon(
-              Icons.done,
-              color: Colors.green,
+              Icons.star,
+              color: Colors.orangeAccent,
             )
-          : Icon(Icons.add_circle_outline),
+          : Icon(Icons.star_border),
       onPressed: toggleFavourite,
     );
   }
