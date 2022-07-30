@@ -6,11 +6,13 @@ import 'package:stocker/xtb/model/chart_period.dart';
 class ChartPeriodSelector extends StatefulWidget {
   final void Function(ChartPeriod period) periodChanged;
   final ChartPeriod initialPeriod;
+  final Axis direction;
 
   const ChartPeriodSelector({
     super.key,
     required this.initialPeriod,
     required this.periodChanged,
+    required this.direction,
   });
 
   @override
@@ -76,7 +78,7 @@ class _ChartPeriodSelectorState extends State<ChartPeriodSelector> {
   Widget _buildList() {
     if (_extended) {
       return Wrap(
-        direction: Axis.horizontal,
+        direction: widget.direction,
         children: [
           ...PERIODS.map(
             (period) => ChartPeriodItemView(
